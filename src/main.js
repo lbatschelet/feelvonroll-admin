@@ -1,5 +1,5 @@
 import './style.css'
-import { fetchAdminPins, getDefaultApiBase, updatePinApproval } from './adminApi'
+import { deletePins, fetchAdminPins, getDefaultApiBase, updatePinApprovalBulk } from './adminApi'
 
 const app = document.querySelector('#app')
 
@@ -51,12 +51,18 @@ tableCard.className = 'card'
 tableCard.innerHTML = `
   <div class="card-header">
     <h2>Pins</h2>
-    <span id="pinCount">0</span>
+    <div class="header-actions">
+      <span id="pinCount">0</span>
+      <button id="approveSelected" class="ghost">Freigeben</button>
+      <button id="blockSelected" class="ghost">Sperren</button>
+      <button id="deleteSelected" class="danger">Löschen</button>
+    </div>
     </div>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
+          <th><input type="checkbox" id="selectAll" /></th>
           <th>ID</th>
           <th>Etage</th>
           <th>Wohlbefinden</th>
@@ -79,6 +85,10 @@ const tokenInput = configCard.querySelector('#adminToken')
 const saveButton = configCard.querySelector('#saveConfig')
 const reloadButton = configCard.querySelector('#reloadPins')
 const pinCount = tableCard.querySelector('#pinCount')
+const approveSelected = tableCard.querySelector('#approveSelected')
+const blockSelected = tableCard.querySelector('#blockSelected')
+const deleteSelected = tableCard.querySelector('#deleteSelected')
+const selectAll = tableCard.querySelector('#selectAll')
 const pinsBody = tableCard.querySelector('#pinsBody')
 
 apiBaseInput.value = state.apiBase
@@ -96,6 +106,16 @@ reloadButton.addEventListener('click', () => {
   loadPins()
 })
 
+approveSelected.addEventListener('click', () => bulkUpdateApproval(1))
+blockSelected.addEventListener('click', () => bulkUpdateApproval(0))
+deleteSelected.addEventListener('click', bulkDelete)
+selectAll.addEventListener('change', () => {
+  const checked = selectAll.checked
+  pinsBody.querySelectorAll('input[type="checkbox"][data-id]').forEach((input) => {
+    input.checked = checked
+  })
+})
+
 loadPins()
 
 async function loadPins() {
@@ -104,7 +124,7 @@ async function loadPins() {
     state.pins = await fetchAdminPins({ apiBase: state.apiBase, token: state.token })
     state.error = ''
     renderPins()
-    setStatus('', false)
+    setStatus(`Verbunden (${state.pins.length} Einträge)`, false)
   } catch (error) {
     state.error = error.message
     renderPins()
@@ -127,6 +147,7 @@ function renderPins() {
     const row = document.createElement('tr')
     const reasons = Array.isArray(pin.reasons) ? pin.reasons.join(', ') : ''
     row.innerHTML = `
+      <td><input type="checkbox" data-id="${pin.id}" /></td>
       <td>${pin.id}</td>
       <td>${pin.floor_index}</td>
       <td>${pin.wellbeing}/10</td>
@@ -150,10 +171,10 @@ function renderPins() {
       const nextApproved = pin.approved ? 0 : 1
       button.disabled = true
       try {
-        await updatePinApproval({
+        await updatePinApprovalBulk({
           apiBase: state.apiBase,
           token: state.token,
-          id,
+          ids: [id],
           approved: nextApproved,
         })
         pin.approved = nextApproved
@@ -164,6 +185,52 @@ function renderPins() {
       }
     })
   })
+}
+
+async function bulkUpdateApproval(approved) {
+  const ids = getSelectedIds()
+  if (!ids.length) {
+    setStatus('Keine Pins ausgewählt', true)
+    return
+  }
+  setStatus('Speichere...', false)
+  try {
+    await updatePinApprovalBulk({ apiBase: state.apiBase, token: state.token, ids, approved })
+    state.pins.forEach((pin) => {
+      if (ids.includes(pin.id)) {
+        pin.approved = approved
+      }
+    })
+    renderPins()
+    setStatus(`Aktualisiert (${ids.length})`, false)
+  } catch (error) {
+    setStatus(error.message, true)
+  }
+}
+
+async function bulkDelete() {
+  const ids = getSelectedIds()
+  if (!ids.length) {
+    setStatus('Keine Pins ausgewählt', true)
+    return
+  }
+  const confirmed = window.confirm(`Pins wirklich löschen? (${ids.length})`)
+  if (!confirmed) return
+  setStatus('Lösche...', false)
+  try {
+    await deletePins({ apiBase: state.apiBase, token: state.token, ids })
+    state.pins = state.pins.filter((pin) => !ids.includes(pin.id))
+    renderPins()
+    setStatus(`Gelöscht (${ids.length})`, false)
+  } catch (error) {
+    setStatus(error.message, true)
+  }
+}
+
+function getSelectedIds() {
+  return Array.from(pinsBody.querySelectorAll('input[type="checkbox"][data-id]:checked')).map(
+    (input) => Number(input.dataset.id)
+  )
 }
 
 function setStatus(message, isError) {

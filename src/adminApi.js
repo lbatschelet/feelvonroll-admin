@@ -16,13 +16,33 @@ export async function fetchAdminPins({ apiBase, token }) {
 }
 
 export async function updatePinApproval({ apiBase, token, id, approved }) {
+  return updatePinApprovalBulk({ apiBase, token, ids: [id], approved })
+}
+
+export async function updatePinApprovalBulk({ apiBase, token, ids, approved }) {
   const response = await fetch(`${apiBase}/admin_pins.php`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Admin-Token': token,
     },
-    body: JSON.stringify({ id, approved }),
+    body: JSON.stringify({ action: 'update_approval', ids, approved }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function deletePins({ apiBase, token, ids }) {
+  const response = await fetch(`${apiBase}/admin_pins.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Admin-Token': token,
+    },
+    body: JSON.stringify({ action: 'delete', ids }),
   })
   if (!response.ok) {
     const message = await parseError(response)

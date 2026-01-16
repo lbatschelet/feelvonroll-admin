@@ -65,6 +65,29 @@ h2 {
   margin-bottom: 12px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ghost {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.ghost:hover {
+  background: #cbd5f5;
+}
+
+.danger {
+  background: #dc2626;
+}
+
+.danger:hover {
+  background: #b91c1c;
+}
+
 .form-row {
   display: flex;
   flex-direction: column;
@@ -129,6 +152,11 @@ td {
   padding: 10px 8px;
   border-bottom: 1px solid #e2e8f0;
   vertical-align: top;
+}
+
+th input[type='checkbox'],
+td input[type='checkbox'] {
+  transform: scale(1.1);
 }
 
 th {
