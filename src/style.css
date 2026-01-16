@@ -65,6 +65,14 @@ h2 {
   margin-bottom: 12px;
 }
 
+.login-card {
+  max-width: 420px;
+}
+
+.tools-card {
+  display: none;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -110,6 +118,22 @@ h2 {
 .form-actions {
   display: flex;
   gap: 10px;
+}
+
+.tools {
+  display: grid;
+  grid-template-columns: 1fr 160px auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.tools input,
+.tools select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  background: #ffffff;
 }
 
 button {
@@ -182,4 +206,15 @@ th {
   text-align: center;
   color: #94a3b8;
   padding: 20px;
+}
+
+.tools-card,
+.card {
+  transition: opacity 0.2s ease;
+}
+
+@media (max-width: 800px) {
+  .tools {
+    grid-template-columns: 1fr;
+  }
 }

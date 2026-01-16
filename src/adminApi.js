@@ -1,11 +1,11 @@
-const DEFAULT_API_BASE = import.meta.env.VITE_API_BASE || '/api'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
-export function getDefaultApiBase() {
-  return DEFAULT_API_BASE
+export function getApiBase() {
+  return API_BASE
 }
 
-export async function fetchAdminPins({ apiBase, token }) {
-  const response = await fetch(`${apiBase}/admin_pins.php`, {
+export async function fetchAdminPins({ token }) {
+  const response = await fetch(`${API_BASE}/admin_pins.php`, {
     headers: { 'X-Admin-Token': token },
   })
   if (!response.ok) {
@@ -19,8 +19,8 @@ export async function updatePinApproval({ apiBase, token, id, approved }) {
   return updatePinApprovalBulk({ apiBase, token, ids: [id], approved })
 }
 
-export async function updatePinApprovalBulk({ apiBase, token, ids, approved }) {
-  const response = await fetch(`${apiBase}/admin_pins.php`, {
+export async function updatePinApprovalBulk({ token, ids, approved }) {
+  const response = await fetch(`${API_BASE}/admin_pins.php`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -35,8 +35,8 @@ export async function updatePinApprovalBulk({ apiBase, token, ids, approved }) {
   return response.json()
 }
 
-export async function deletePins({ apiBase, token, ids }) {
-  const response = await fetch(`${apiBase}/admin_pins.php`, {
+export async function deletePins({ token, ids }) {
+  const response = await fetch(`${API_BASE}/admin_pins.php`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

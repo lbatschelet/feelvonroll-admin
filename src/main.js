@@ -1,13 +1,15 @@
 import './style.css'
-import { deletePins, fetchAdminPins, getDefaultApiBase, updatePinApprovalBulk } from './adminApi'
+import { deletePins, fetchAdminPins, updatePinApprovalBulk } from './adminApi'
 
 const app = document.querySelector('#app')
 
 const state = {
-  apiBase: localStorage.getItem('admin_api_base') || getDefaultApiBase(),
   token: localStorage.getItem('admin_token') || '',
   pins: [],
   error: '',
+  query: '',
+  filter: 'all',
+  loggedIn: false,
 }
 
 const layout = document.createElement('div')
@@ -23,28 +25,38 @@ header.innerHTML = `
 `
 layout.appendChild(header)
 
-const configCard = document.createElement('section')
-configCard.className = 'card'
-configCard.innerHTML = `
-  <h2>API Verbindung</h2>
-  <div class="form-row">
-    <label>API Base</label>
-    <input type="text" id="apiBase" placeholder="https://domain.tld/api" />
-  </div>
+const loginCard = document.createElement('section')
+loginCard.className = 'card login-card'
+loginCard.innerHTML = `
+  <h2>Admin Login</h2>
   <div class="form-row">
     <label>Admin Token</label>
     <input type="password" id="adminToken" placeholder="Token" />
   </div>
   <div class="form-actions">
-    <button id="saveConfig">Speichern</button>
-    <button id="reloadPins">Pins laden</button>
+    <button id="loginButton">Verbinden</button>
   </div>
 `
-layout.appendChild(configCard)
+layout.appendChild(loginCard)
 
 const status = document.createElement('div')
 status.className = 'status'
 layout.appendChild(status)
+
+const toolsCard = document.createElement('section')
+toolsCard.className = 'card tools-card'
+toolsCard.innerHTML = `
+  <div class="tools">
+    <input type="text" id="searchInput" placeholder="Suche (ID, Etage, Text)" />
+    <select id="filterSelect">
+      <option value="all">Alle</option>
+      <option value="approved">Freigegeben</option>
+      <option value="blocked">Gesperrt</option>
+    </select>
+    <button id="reloadPins">Pins laden</button>
+  </div>
+`
+layout.appendChild(toolsCard)
 
 const tableCard = document.createElement('section')
 tableCard.className = 'card'
@@ -80,10 +92,11 @@ layout.appendChild(tableCard)
 
 app.appendChild(layout)
 
-const apiBaseInput = configCard.querySelector('#apiBase')
-const tokenInput = configCard.querySelector('#adminToken')
-const saveButton = configCard.querySelector('#saveConfig')
-const reloadButton = configCard.querySelector('#reloadPins')
+const tokenInput = loginCard.querySelector('#adminToken')
+const loginButton = loginCard.querySelector('#loginButton')
+const reloadButton = toolsCard.querySelector('#reloadPins')
+const searchInput = toolsCard.querySelector('#searchInput')
+const filterSelect = toolsCard.querySelector('#filterSelect')
 const pinCount = tableCard.querySelector('#pinCount')
 const approveSelected = tableCard.querySelector('#approveSelected')
 const blockSelected = tableCard.querySelector('#blockSelected')
@@ -91,19 +104,17 @@ const deleteSelected = tableCard.querySelector('#deleteSelected')
 const selectAll = tableCard.querySelector('#selectAll')
 const pinsBody = tableCard.querySelector('#pinsBody')
 
-apiBaseInput.value = state.apiBase
 tokenInput.value = state.token
 
-saveButton.addEventListener('click', () => {
-  state.apiBase = apiBaseInput.value.trim() || getDefaultApiBase()
-  state.token = tokenInput.value.trim()
-  localStorage.setItem('admin_api_base', state.apiBase)
-  localStorage.setItem('admin_token', state.token)
-  setStatus('Gespeichert', false)
+loginButton.addEventListener('click', () => handleLogin())
+reloadButton.addEventListener('click', () => loadPins())
+searchInput.addEventListener('input', (event) => {
+  state.query = event.target.value.trim().toLowerCase()
+  renderPins()
 })
-
-reloadButton.addEventListener('click', () => {
-  loadPins()
+filterSelect.addEventListener('change', (event) => {
+  state.filter = event.target.value
+  renderPins()
 })
 
 approveSelected.addEventListener('click', () => bulkUpdateApproval(1))
@@ -116,12 +127,12 @@ selectAll.addEventListener('change', () => {
   })
 })
 
-loadPins()
+applyVisibility()
 
 async function loadPins() {
   setStatus('Lade Pins...', false)
   try {
-    state.pins = await fetchAdminPins({ apiBase: state.apiBase, token: state.token })
+    state.pins = await fetchAdminPins({ token: state.token })
     state.error = ''
     renderPins()
     setStatus(`Verbunden (${state.pins.length} Einträge)`, false)
@@ -134,16 +145,17 @@ async function loadPins() {
 
 function renderPins() {
   pinsBody.innerHTML = ''
-  pinCount.textContent = String(state.pins.length)
+  pinCount.textContent = String(getFilteredPins().length)
 
-  if (!state.pins.length) {
+  const filteredPins = getFilteredPins()
+  if (!filteredPins.length) {
     const row = document.createElement('tr')
-    row.innerHTML = `<td colspan="7" class="empty">Keine Pins vorhanden</td>`
+    row.innerHTML = `<td colspan="8" class="empty">Keine Pins vorhanden</td>`
     pinsBody.appendChild(row)
     return
   }
 
-  state.pins.forEach((pin) => {
+  filteredPins.forEach((pin) => {
     const row = document.createElement('tr')
     const reasons = Array.isArray(pin.reasons) ? pin.reasons.join(', ') : ''
     row.innerHTML = `
@@ -172,7 +184,6 @@ function renderPins() {
       button.disabled = true
       try {
         await updatePinApprovalBulk({
-          apiBase: state.apiBase,
           token: state.token,
           ids: [id],
           approved: nextApproved,
@@ -195,7 +206,7 @@ async function bulkUpdateApproval(approved) {
   }
   setStatus('Speichere...', false)
   try {
-    await updatePinApprovalBulk({ apiBase: state.apiBase, token: state.token, ids, approved })
+    await updatePinApprovalBulk({ token: state.token, ids, approved })
     state.pins.forEach((pin) => {
       if (ids.includes(pin.id)) {
         pin.approved = approved
@@ -218,7 +229,7 @@ async function bulkDelete() {
   if (!confirmed) return
   setStatus('Lösche...', false)
   try {
-    await deletePins({ apiBase: state.apiBase, token: state.token, ids })
+    await deletePins({ token: state.token, ids })
     state.pins = state.pins.filter((pin) => !ids.includes(pin.id))
     renderPins()
     setStatus(`Gelöscht (${ids.length})`, false)
@@ -231,6 +242,41 @@ function getSelectedIds() {
   return Array.from(pinsBody.querySelectorAll('input[type="checkbox"][data-id]:checked')).map(
     (input) => Number(input.dataset.id)
   )
+}
+
+async function handleLogin() {
+  state.token = tokenInput.value.trim()
+  localStorage.setItem('admin_token', state.token)
+  await loadPins()
+  if (!state.error) {
+    state.loggedIn = true
+    applyVisibility()
+  }
+}
+
+function applyVisibility() {
+  loginCard.style.display = state.loggedIn ? 'none' : 'block'
+  toolsCard.style.display = state.loggedIn ? 'block' : 'none'
+  tableCard.style.display = state.loggedIn ? 'block' : 'none'
+}
+
+function getFilteredPins() {
+  return state.pins.filter((pin) => {
+    if (state.filter === 'approved' && !pin.approved) return false
+    if (state.filter === 'blocked' && pin.approved) return false
+
+    if (!state.query) return true
+    const haystack = [
+      pin.id,
+      pin.floor_index,
+      pin.wellbeing,
+      pin.note || '',
+      Array.isArray(pin.reasons) ? pin.reasons.join(' ') : '',
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(state.query)
+  })
 }
 
 function setStatus(message, isError) {
