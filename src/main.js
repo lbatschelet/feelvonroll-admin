@@ -66,7 +66,8 @@ tableCard.innerHTML = `
     <div class="header-actions">
       <span id="pinCount">0</span>
       <button id="approveSelected" class="ghost">Freigeben</button>
-      <button id="blockSelected" class="ghost">Sperren</button>
+      <button id="pendingSelected" class="ghost">Wartend</button>
+      <button id="blockSelected" class="ghost">Ablehnen</button>
       <button id="deleteSelected" class="danger">Löschen</button>
     </div>
     </div>
@@ -99,6 +100,7 @@ const searchInput = toolsCard.querySelector('#searchInput')
 const filterSelect = toolsCard.querySelector('#filterSelect')
 const pinCount = tableCard.querySelector('#pinCount')
 const approveSelected = tableCard.querySelector('#approveSelected')
+const pendingSelected = tableCard.querySelector('#pendingSelected')
 const blockSelected = tableCard.querySelector('#blockSelected')
 const deleteSelected = tableCard.querySelector('#deleteSelected')
 const selectAll = tableCard.querySelector('#selectAll')
@@ -118,7 +120,8 @@ filterSelect.addEventListener('change', (event) => {
 })
 
 approveSelected.addEventListener('click', () => bulkUpdateApproval(1))
-blockSelected.addEventListener('click', () => bulkUpdateApproval(0))
+pendingSelected.addEventListener('click', () => bulkUpdateApproval(0))
+blockSelected.addEventListener('click', () => bulkUpdateApproval(-1))
 deleteSelected.addEventListener('click', bulkDelete)
 selectAll.addEventListener('change', () => {
   const checked = selectAll.checked
@@ -132,7 +135,8 @@ applyVisibility()
 async function loadPins() {
   setStatus('Lade Pins...', false)
   try {
-    state.pins = await fetchAdminPins({ token: state.token })
+    const rawPins = await fetchAdminPins({ token: state.token })
+    state.pins = rawPins.map(normalizePin)
     state.error = ''
     renderPins()
     setStatus(`Verbunden (${state.pins.length} Einträge)`, false)
@@ -140,6 +144,19 @@ async function loadPins() {
     state.error = error.message
     renderPins()
     setStatus(error.message, true)
+  }
+}
+
+function normalizePin(pin) {
+  return {
+    ...pin,
+    id: Number(pin.id),
+    floor_index: Number(pin.floor_index),
+    position_x: Number(pin.position_x),
+    position_y: Number(pin.position_y),
+    position_z: Number(pin.position_z),
+    wellbeing: Number(pin.wellbeing),
+    approved: Number(pin.approved),
   }
 }
 
@@ -158,6 +175,7 @@ function renderPins() {
   filteredPins.forEach((pin) => {
     const row = document.createElement('tr')
     const reasons = Array.isArray(pin.reasons) ? pin.reasons.join(', ') : ''
+    const statusLabel = getStatusLabel(pin.approved)
     row.innerHTML = `
       <td><input type="checkbox" data-id="${pin.id}" /></td>
       <td>${pin.id}</td>
@@ -167,8 +185,8 @@ function renderPins() {
       <td>${escapeHtml(pin.note || '')}</td>
       <td>${formatDate(pin.created_at)}</td>
       <td>
-        <button class="toggle ${pin.approved ? 'approved' : ''}" data-id="${pin.id}">
-          ${pin.approved ? 'Freigegeben' : 'Gesperrt'}
+        <button class="toggle ${getStatusClass(pin.approved)}" data-id="${pin.id}">
+          ${statusLabel}
         </button>
       </td>
     `
@@ -180,7 +198,7 @@ function renderPins() {
       const id = Number(button.dataset.id)
       const pin = state.pins.find((item) => item.id === id)
       if (!pin) return
-      const nextApproved = pin.approved ? 0 : 1
+      const nextApproved = getNextStatus(pin.approved)
       button.disabled = true
       try {
         await updatePinApprovalBulk({
@@ -196,6 +214,24 @@ function renderPins() {
       }
     })
   })
+}
+
+function getNextStatus(current) {
+  if (current === 1) return -1
+  if (current === -1) return 0
+  return 1
+}
+
+function getStatusLabel(status) {
+  if (status === 1) return 'Freigegeben'
+  if (status === -1) return 'Abgelehnt'
+  return 'Wartet'
+}
+
+function getStatusClass(status) {
+  if (status === 1) return 'approved'
+  if (status === -1) return 'rejected'
+  return 'pending'
 }
 
 async function bulkUpdateApproval(approved) {
