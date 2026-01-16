@@ -9,6 +9,7 @@ const state = {
   error: '',
   query: '',
   filter: 'all',
+  sort: 'newest',
   loggedIn: false,
 }
 
@@ -50,8 +51,15 @@ toolsCard.innerHTML = `
     <input type="text" id="searchInput" placeholder="Suche (ID, Etage, Text)" />
     <select id="filterSelect">
       <option value="all">Alle</option>
+      <option value="pending">Wartet</option>
       <option value="approved">Freigegeben</option>
-      <option value="blocked">Gesperrt</option>
+      <option value="rejected">Abgelehnt</option>
+    </select>
+    <select id="sortSelect">
+      <option value="newest">Neueste zuerst</option>
+      <option value="oldest">Älteste zuerst</option>
+      <option value="floor">Etage</option>
+      <option value="wellbeing">Wohlbefinden</option>
     </select>
     <button id="reloadPins">Pins laden</button>
   </div>
@@ -98,6 +106,7 @@ const loginButton = loginCard.querySelector('#loginButton')
 const reloadButton = toolsCard.querySelector('#reloadPins')
 const searchInput = toolsCard.querySelector('#searchInput')
 const filterSelect = toolsCard.querySelector('#filterSelect')
+const sortSelect = toolsCard.querySelector('#sortSelect')
 const pinCount = tableCard.querySelector('#pinCount')
 const approveSelected = tableCard.querySelector('#approveSelected')
 const pendingSelected = tableCard.querySelector('#pendingSelected')
@@ -116,6 +125,10 @@ searchInput.addEventListener('input', (event) => {
 })
 filterSelect.addEventListener('change', (event) => {
   state.filter = event.target.value
+  renderPins()
+})
+sortSelect.addEventListener('change', (event) => {
+  state.sort = event.target.value
   renderPins()
 })
 
@@ -297,9 +310,11 @@ function applyVisibility() {
 }
 
 function getFilteredPins() {
-  return state.pins.filter((pin) => {
+  const filtered = state.pins.filter((pin) => {
     if (state.filter === 'approved' && !pin.approved) return false
-    if (state.filter === 'blocked' && pin.approved) return false
+    if (state.filter === 'pending' && pin.approved !== 0) return false
+    if (state.filter === 'approved' && pin.approved !== 1) return false
+    if (state.filter === 'rejected' && pin.approved !== -1) return false
 
     if (!state.query) return true
     const haystack = [
@@ -312,6 +327,19 @@ function getFilteredPins() {
       .join(' ')
       .toLowerCase()
     return haystack.includes(state.query)
+  })
+
+  return filtered.sort((a, b) => {
+    if (state.sort === 'oldest') {
+      return new Date(a.created_at) - new Date(b.created_at)
+    }
+    if (state.sort === 'floor') {
+      return a.floor_index - b.floor_index
+    }
+    if (state.sort === 'wellbeing') {
+      return b.wellbeing - a.wellbeing
+    }
+    return new Date(b.created_at) - new Date(a.created_at)
   })
 }
 

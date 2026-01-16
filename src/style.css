@@ -122,7 +122,7 @@ h2 {
 
 .tools {
   display: grid;
-  grid-template-columns: 1fr 160px auto;
+  grid-template-columns: 1fr 160px 180px auto;
   gap: 12px;
   align-items: center;
 }
