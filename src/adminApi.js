@@ -9,7 +9,8 @@ export async function fetchAdminPins({ apiBase, token }) {
     headers: { 'X-Admin-Token': token },
   })
   if (!response.ok) {
-    throw new Error('Pins konnten nicht geladen werden')
+    const message = await parseError(response)
+    throw new Error(message)
   }
   return response.json()
 }
@@ -24,7 +25,23 @@ export async function updatePinApproval({ apiBase, token, id, approved }) {
     body: JSON.stringify({ id, approved }),
   })
   if (!response.ok) {
-    throw new Error('Status konnte nicht gespeichert werden')
+    const message = await parseError(response)
+    throw new Error(message)
   }
   return response.json()
+}
+
+async function parseError(response) {
+  let text = ''
+  try {
+    text = await response.text()
+    const json = JSON.parse(text)
+    if (json && json.error) {
+      return `HTTP ${response.status}: ${json.error}`
+    }
+  } catch (error) {
+    // ignore parsing errors
+  }
+
+  return `HTTP ${response.status}: ${text || response.statusText || 'Unbekannter Fehler'}`
 }

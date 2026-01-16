@@ -52,7 +52,7 @@ tableCard.innerHTML = `
   <div class="card-header">
     <h2>Pins</h2>
     <span id="pinCount">0</span>
-  </div>
+    </div>
   <div class="table-wrap">
     <table>
       <thead>
