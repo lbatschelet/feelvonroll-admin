@@ -6,7 +6,7 @@ export function getApiBase() {
 
 export async function fetchAdminPins({ token }) {
   const response = await fetch(`${API_BASE}/admin_pins.php`, {
-    headers: { 'X-Admin-Token': token },
+    headers: { Authorization: `Bearer ${token}` },
   })
   if (!response.ok) {
     const message = await parseError(response)
@@ -24,7 +24,7 @@ export async function updatePinApprovalBulk({ token, ids, approved }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'update_approval', ids, approved }),
   })
@@ -40,7 +40,7 @@ export async function deletePins({ token, ids }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'delete', ids }),
   })
@@ -53,7 +53,7 @@ export async function deletePins({ token, ids }) {
 
 export async function fetchQuestions({ token }) {
   const response = await fetch(`${API_BASE}/admin_questions.php`, {
-    headers: { 'X-Admin-Token': token },
+    headers: { Authorization: `Bearer ${token}` },
   })
   if (!response.ok) {
     const message = await parseError(response)
@@ -67,7 +67,7 @@ export async function upsertQuestion({ token, question }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'upsert', ...question }),
   })
@@ -83,7 +83,7 @@ export async function deleteQuestion({ token, question_key }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'delete', question_key }),
   })
@@ -99,7 +99,7 @@ export async function fetchOptions({ token, question_key }) {
     ? `${API_BASE}/admin_options.php?question_key=${encodeURIComponent(question_key)}`
     : `${API_BASE}/admin_options.php`
   const response = await fetch(url, {
-    headers: { 'X-Admin-Token': token },
+    headers: { Authorization: `Bearer ${token}` },
   })
   if (!response.ok) {
     const message = await parseError(response)
@@ -113,7 +113,7 @@ export async function upsertOption({ token, option }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'upsert', ...option }),
   })
@@ -129,7 +129,7 @@ export async function deleteOption({ token, question_key, option_key }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'delete', question_key, option_key }),
   })
@@ -142,7 +142,7 @@ export async function deleteOption({ token, question_key, option_key }) {
 
 export async function fetchLanguages({ token }) {
   const response = await fetch(`${API_BASE}/admin_languages.php`, {
-    headers: { 'X-Admin-Token': token },
+    headers: { Authorization: `Bearer ${token}` },
   })
   if (!response.ok) {
     const message = await parseError(response)
@@ -156,7 +156,7 @@ export async function upsertLanguage({ token, lang, label, enabled }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'upsert', lang, label, enabled }),
   })
@@ -172,7 +172,7 @@ export async function toggleLanguage({ token, lang, enabled }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'toggle', lang, enabled }),
   })
@@ -188,7 +188,7 @@ export async function deleteLanguage({ token, lang }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'delete', lang }),
   })
@@ -204,7 +204,7 @@ export async function upsertTranslation({ token, translation_key, lang, text }) 
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'upsert', translation_key, lang, text }),
   })
@@ -220,7 +220,7 @@ export async function deleteTranslation({ token, translation_key, lang }) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Token': token,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ action: 'delete', translation_key, lang }),
   })
@@ -238,6 +238,118 @@ export async function fetchTranslations({ lang, prefix }) {
   const query = params.toString()
   const url = `${API_BASE}/translations.php${query ? `?${query}` : ''}`
   const response = await fetch(url)
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function fetchAuthStatus() {
+  const response = await fetch(`${API_BASE}/admin_auth.php`)
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function loginWithToken({ admin_token }) {
+  const response = await fetch(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'bootstrap_login', admin_token }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function loginUser({ email, password }) {
+  const response = await fetch(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'login', email, password }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function setPassword({ reset_token, password }) {
+  const response = await fetch(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'set_password', reset_token, password }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function refreshToken({ token }) {
+  const response = await fetch(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action: 'refresh' }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function fetchUsers({ token }) {
+  const response = await fetch(`${API_BASE}/admin_users.php`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function fetchAuditLogs({ token, limit = 50, offset = 0 }) {
+  const params = new URLSearchParams()
+  params.set('limit', String(limit))
+  params.set('offset', String(offset))
+  const response = await fetch(`${API_BASE}/admin_audit.php?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function createUser({ token, name, email }) {
+  const response = await fetch(`${API_BASE}/admin_users.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action: 'create', name, email }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function resetUserPassword({ token, id }) {
+  const response = await fetch(`${API_BASE}/admin_users.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action: 'reset', id }),
+  })
   if (!response.ok) {
     const message = await parseError(response)
     throw new Error(message)
