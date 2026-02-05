@@ -394,38 +394,52 @@ userModal.innerHTML = `
       <h3>User erstellen</h3>
       <button type="button" class="modal-close" aria-label="Schliessen">×</button>
     </div>
-    <div class="modal-body">
-      <div class="question-row">
-        <label class="field">
-          <span>Name</span>
-          <input type="text" id="modalUserName" placeholder="Name" />
-        </label>
-        <label class="field">
-          <span>Email</span>
-          <input type="email" id="modalUserEmail" placeholder="name@domain.ch" />
-        </label>
-      </div>
-      <div class="question-row">
-        <label class="field">
-          <span>Passwort setzen</span>
-          <select id="modalUserMode">
-            <option value="reset" selected>Reset-Link erstellen</option>
-            <option value="password">Passwort jetzt setzen</option>
-          </select>
-        </label>
-      </div>
-      <div class="question-row modal-password">
-        <label class="field">
-          <span>Passwort</span>
-          <input type="password" id="modalUserPassword" placeholder="Passwort" />
-        </label>
-        <label class="field">
-          <span>Passwort bestätigen</span>
-          <input type="password" id="modalUserPasswordConfirm" placeholder="Passwort bestätigen" />
-        </label>
-      </div>
-      <div class="reset-link" id="modalResetLink"></div>
+  <div class="modal-body">
+    <div class="question-row">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="modalUserName" placeholder="Name" autocomplete="name" />
+      </label>
     </div>
+    <div class="question-row">
+      <label class="field">
+        <span>Email</span>
+        <input
+          type="email"
+          id="modalUserEmail"
+          placeholder="name@domain.ch"
+          autocomplete="email"
+        />
+      </label>
+    </div>
+    <div class="question-row modal-password">
+      <label class="field">
+        <span>Passwort</span>
+        <input
+          type="password"
+          id="modalUserPassword"
+          placeholder="Passwort"
+          autocomplete="new-password"
+        />
+      </label>
+      <label class="field">
+        <span>Passwort bestätigen</span>
+        <input
+          type="password"
+          id="modalUserPasswordConfirm"
+          placeholder="Passwort bestätigen"
+          autocomplete="new-password"
+        />
+      </label>
+    </div>
+    <div class="question-row">
+      <label class="field checkbox-field">
+        <input type="checkbox" id="modalUserUseReset" />
+        <span>Reset-Link erstellen statt Passwort setzen</span>
+      </label>
+    </div>
+    <div class="reset-link" id="modalResetLink"></div>
+  </div>
     <div class="modal-actions">
       <button type="button" class="ghost" id="modalCancel">Abbrechen</button>
       <button type="button" id="modalCreateUser">User erstellen</button>
@@ -537,9 +551,9 @@ const modalCancelButton = userModal.querySelector('#modalCancel')
 const modalCreateUserButton = userModal.querySelector('#modalCreateUser')
 const modalUserName = userModal.querySelector('#modalUserName')
 const modalUserEmail = userModal.querySelector('#modalUserEmail')
-const modalUserMode = userModal.querySelector('#modalUserMode')
 const modalUserPassword = userModal.querySelector('#modalUserPassword')
 const modalUserPasswordConfirm = userModal.querySelector('#modalUserPasswordConfirm')
+const modalUserUseReset = userModal.querySelector('#modalUserUseReset')
 const modalResetLink = userModal.querySelector('#modalResetLink')
 const reloadAuditButton = auditCard.querySelector('#reloadAudit')
 const auditLimitSelect = auditCard.querySelector('#auditLimit')
@@ -629,7 +643,7 @@ reloadUsersButton.addEventListener('click', () => loadUsers())
 addUserButton.addEventListener('click', () => openUserModal())
 modalCloseButton.addEventListener('click', () => closeUserModal())
 modalCancelButton.addEventListener('click', () => closeUserModal())
-modalUserMode.addEventListener('change', () => updateUserModalMode())
+modalUserUseReset.addEventListener('change', () => updateUserModalMode())
 modalCreateUserButton.addEventListener('click', () => handleCreateUser())
 reloadAuditButton.addEventListener('click', () => loadAuditLogs())
 auditLimitSelect.addEventListener('change', (event) => {
@@ -1773,11 +1787,11 @@ async function handleCreateUser() {
     setStatus('Name und Email fehlen', true)
     return
   }
-  const mode = modalUserMode.value
+  const useReset = modalUserUseReset.checked
   const password = modalUserPassword.value
   const passwordConfirm = modalUserPasswordConfirm.value
 
-  if (mode === 'password') {
+  if (!useReset) {
     if (!password || password.length < 8) {
       setStatus('Passwort muss mindestens 8 Zeichen haben', true)
       return
@@ -1793,16 +1807,17 @@ async function handleCreateUser() {
       token: state.token,
       name,
       email,
-      password: mode === 'password' ? password : '',
+      password: useReset ? '' : password,
     })
 
     modalUserName.value = ''
     modalUserEmail.value = ''
     modalUserPassword.value = ''
     modalUserPasswordConfirm.value = ''
+    modalUserUseReset.checked = false
     modalResetLink.innerHTML = ''
 
-    if (mode === 'reset' && result.reset_token) {
+    if (useReset && result.reset_token) {
       state.lastResetLink = buildResetLink(result.reset_token)
       openResetLink(state.lastResetLink)
       renderResetLink()
@@ -1816,24 +1831,14 @@ async function handleCreateUser() {
       state.loggedIn = false
       state.token = ''
       localStorage.removeItem('admin_jwt')
-      setStatus(
-        mode === 'reset'
-          ? 'User erstellt. Reset-Link (24h) bereit'
-          : 'User erstellt. Passwort gesetzt',
-        false
-      )
+      setStatus(useReset ? 'User erstellt. Reset-Link (24h) bereit' : 'User erstellt. Passwort gesetzt', false)
       setAuthSection('set-password')
       applyVisibility()
       return
     }
 
     await loadUsers()
-    setStatus(
-      mode === 'reset'
-        ? 'User erstellt. Reset-Link (24h) bereit'
-        : 'User erstellt. Passwort gesetzt',
-      false
-    )
+    setStatus(useReset ? 'User erstellt. Reset-Link (24h) bereit' : 'User erstellt. Passwort gesetzt', false)
   })
 }
 
@@ -2083,9 +2088,11 @@ function closeUserModal() {
 }
 
 function updateUserModalMode() {
-  const mode = modalUserMode.value
   const passwordRow = userModal.querySelector('.modal-password')
-  passwordRow.style.display = mode === 'password' ? 'grid' : 'none'
+  const disabled = modalUserUseReset.checked
+  passwordRow.style.display = 'grid'
+  modalUserPassword.disabled = disabled
+  modalUserPasswordConfirm.disabled = disabled
 }
 
 function renderModalResetLink(link) {
