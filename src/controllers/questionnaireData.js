@@ -1,0 +1,70 @@
+/**
+ * Questionnaire data loaders and translation merging.
+ * Exports: loadLanguages, loadQuestions, loadOptions, loadTranslations,
+ *          computeSelectedLanguage, mergeTranslations.
+ */
+import { getActiveLanguages } from '../services/languagesService'
+
+export function computeSelectedLanguage({ languages, selectedLanguage }) {
+  const activeLanguages = getActiveLanguages(languages)
+  const fallbackLanguage = activeLanguages[0]?.lang || languages[0]?.lang || 'de'
+  if (!selectedLanguage || !activeLanguages.find((lang) => lang.lang === selectedLanguage)) {
+    return fallbackLanguage
+  }
+  return selectedLanguage
+}
+
+export function mergeTranslations({ questionTranslationsByLang, optionTranslations, selectedLanguage }) {
+  return {
+    ...(questionTranslationsByLang[selectedLanguage] || {}),
+    ...optionTranslations,
+  }
+}
+
+export function createQuestionnaireData({ state, api }) {
+  const loadLanguages = async () => {
+    const languages = await api.fetchLanguages({ token: state.token })
+    state.languages = languages
+    state.selectedLanguage = computeSelectedLanguage({
+      languages,
+      selectedLanguage: state.selectedLanguage,
+    })
+    return languages
+  }
+
+  const loadQuestions = async () => {
+    state.questions = await api.fetchQuestions({ token: state.token })
+    return state.questions
+  }
+
+  const loadOptions = async () => {
+    state.options = await api.fetchOptions({ token: state.token })
+    return state.options
+  }
+
+  const loadTranslations = async () => {
+    const activeLanguages = getActiveLanguages(state.languages)
+    const questionTranslationsByLang = {}
+    await Promise.all(
+      activeLanguages.map(async (language) => {
+        questionTranslationsByLang[language.lang] = await api.fetchTranslations({
+          lang: language.lang,
+          prefix: 'questions.',
+        })
+      })
+    )
+    const optionTranslations = await api.fetchTranslations({
+      lang: state.selectedLanguage,
+      prefix: 'options.',
+    })
+    state.translationsByLang = questionTranslationsByLang
+    state.translations = mergeTranslations({
+      questionTranslationsByLang,
+      optionTranslations,
+      selectedLanguage: state.selectedLanguage,
+    })
+    return state.translations
+  }
+
+  return { loadLanguages, loadQuestions, loadOptions, loadTranslations }
+}

@@ -1,3 +1,7 @@
+/**
+ * Admin API tests for request shape and error handling.
+ * Exports: none.
+ */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   deletePins,
@@ -7,7 +11,7 @@ import {
   getApiBase,
   updatePinApprovalBulk,
   upsertTranslation,
-} from './adminApi.js'
+} from '../src/adminApi.js'
 
 const buildResponse = ({ ok = true, jsonData = {}, textData = '', status = 200, statusText = '' } = {}) => ({
   ok,
@@ -36,7 +40,7 @@ describe('adminApi', () => {
     const result = await fetchAdminPins({ token: 'secret' })
 
     expect(fetch).toHaveBeenCalledWith('/api/admin_pins.php', {
-      headers: { 'X-Admin-Token': 'secret' },
+      headers: { Authorization: 'Bearer secret' },
     })
     expect(result).toEqual([])
   })
@@ -64,7 +68,7 @@ describe('adminApi', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Token': 'secret',
+          Authorization: 'Bearer secret',
         },
         body: JSON.stringify({ action: 'update_approval', ids: [1, 2], approved: true }),
       })
@@ -93,7 +97,7 @@ describe('adminApi', () => {
     const result = await fetchQuestions({ token: 'secret' })
 
     expect(fetch).toHaveBeenCalledWith('/api/admin_questions.php', {
-      headers: { 'X-Admin-Token': 'secret' },
+      headers: { Authorization: 'Bearer secret' },
     })
     expect(result).toEqual([])
   })
@@ -104,7 +108,7 @@ describe('adminApi', () => {
     const result = await fetchLanguages({ token: 'secret' })
 
     expect(fetch).toHaveBeenCalledWith('/api/admin_languages.php', {
-      headers: { 'X-Admin-Token': 'secret' },
+      headers: { Authorization: 'Bearer secret' },
     })
     expect(result).toEqual([])
   })
@@ -125,7 +129,7 @@ describe('adminApi', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Token': 'secret',
+          Authorization: 'Bearer secret',
         },
         body: JSON.stringify({
           action: 'upsert',

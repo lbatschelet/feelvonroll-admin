@@ -1,0 +1,41 @@
+/**
+ * Auth API client for admin authentication flows.
+ * Exports: fetchAuthStatus, loginWithToken, loginUser, setPassword, refreshToken.
+ */
+import { API_BASE, requestJson } from './baseClient'
+
+export function fetchAuthStatus() {
+  return requestJson(`${API_BASE}/admin_auth.php`)
+}
+
+export function loginWithToken({ admin_token }) {
+  return requestJson(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'bootstrap_login', admin_token }),
+  })
+}
+
+export function loginUser({ email, password }) {
+  return requestJson(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'login', email, password }),
+  })
+}
+
+export function setPassword({ reset_token, password }) {
+  return requestJson(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'set_password', reset_token, password }),
+  })
+}
+
+export function refreshToken({ token }) {
+  return requestJson(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action: 'refresh' }),
+  })
+}

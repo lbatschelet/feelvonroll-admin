@@ -1,0 +1,109 @@
+/**
+ * Auth session flow for login/logout and initial auth checks.
+ * Exports: createAuthSession.
+ */
+export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
+  const { loginEmail, loginPassword, resetTokenInput, tokenInput } = views.loginCard
+  let loaders = {
+    loadPins: async () => {},
+    loadQuestionnaire: async () => {},
+    loadUsers: async () => {},
+    loadAuditLogs: async () => {},
+  }
+
+  const setLoaders = (next) => {
+    loaders = { ...loaders, ...next }
+  }
+
+  const handleLogin = async () => {
+    const email = loginEmail.value.trim()
+    const password = loginPassword.value
+    if (!email || !password) {
+      shell.setStatus('Bitte Email und Passwort angeben', true)
+      return
+    }
+    try {
+      const result = await api.loginUser({ email, password })
+      state.token = result.token
+      state.currentUserId = result.user?.id || null
+      state.bootstrapMode = false
+      localStorage.setItem('admin_jwt', state.token)
+      state.loggedIn = true
+      await loaders.loadPins()
+      await loaders.loadQuestionnaire()
+      await loaders.loadUsers()
+      await loaders.loadAuditLogs()
+      shell.setPage('dashboard')
+      tokenRefresh.startTokenRefresh()
+    } catch (error) {
+      shell.setStatus(error.message, true)
+    }
+  }
+
+  const handleLogout = async () => {
+    state.token = ''
+    state.loggedIn = false
+    state.bootstrapMode = false
+    state.users = []
+    state.lastResetLink = ''
+    state.currentUserId = null
+    localStorage.removeItem('admin_jwt')
+    tokenRefresh.stopTokenRefresh()
+    shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
+    shell.applyVisibility()
+  }
+
+  const initAuthStatus = async () => {
+    try {
+      const status = await api.fetchAuthStatus()
+      state.bootstrapRequired = Boolean(status.bootstrap_required)
+    } catch (error) {
+      state.bootstrapRequired = false
+    }
+
+    const url = new URL(window.location.href)
+    const resetToken = url.searchParams.get('reset_token')
+    if (resetToken) {
+      resetTokenInput.value = resetToken
+      shell.setAuthSection('set-password')
+    }
+
+    if (state.bootstrapRequired) {
+      state.token = ''
+      localStorage.removeItem('admin_jwt')
+      state.loggedIn = false
+      shell.setAuthSection('bootstrap')
+      shell.applyVisibility()
+      return
+    }
+
+    if (state.token) {
+      try {
+        await loaders.loadPins()
+        state.loggedIn = true
+        await loaders.loadQuestionnaire()
+        await loaders.loadUsers()
+        await loaders.loadAuditLogs()
+        shell.setPage('dashboard')
+        tokenRefresh.startTokenRefresh()
+        return
+      } catch (error) {
+        state.token = ''
+        localStorage.removeItem('admin_jwt')
+      }
+    }
+
+    state.loggedIn = false
+    if (!resetToken) {
+      shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
+    }
+    shell.applyVisibility()
+  }
+
+  const init = () => {
+    tokenInput.value = ''
+    initAuthStatus()
+  }
+
+  return { setLoaders, handleLogin, handleLogout, init }
+}
