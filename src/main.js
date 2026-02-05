@@ -1731,6 +1731,16 @@ async function handleCreateUser() {
     state.lastResetLink = buildResetLink(result.reset_token)
     openResetLink(state.lastResetLink)
     renderResetLink()
+    if (state.bootstrapMode) {
+      state.bootstrapMode = false
+      state.loggedIn = false
+      state.token = ''
+      localStorage.removeItem('admin_jwt')
+      setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
+      setAuthSection('set-password')
+      applyVisibility()
+      return
+    }
     await loadUsers()
     setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
   })
@@ -1782,6 +1792,15 @@ async function initAuthStatus() {
   if (resetToken) {
     resetTokenInput.value = resetToken
     setAuthSection('set-password')
+  }
+
+  if (state.bootstrapRequired) {
+    state.token = ''
+    localStorage.removeItem('admin_jwt')
+    state.loggedIn = false
+    setAuthSection('bootstrap')
+    applyVisibility()
+    return
   }
 
   if (state.token) {
