@@ -15,6 +15,8 @@ import {
   loginUser,
   loginWithToken,
   refreshToken,
+  updateUser,
+  deleteUser,
   resetUserPassword,
   setPassword,
   toggleLanguage,
@@ -57,6 +59,8 @@ const state = {
   },
   refreshTimer: null,
   lastResetLink: '',
+  editingUserId: null,
+  currentUserId: null,
 }
 
 const layout = document.createElement('div')
@@ -390,8 +394,8 @@ const userModal = document.createElement('div')
 userModal.className = 'modal-backdrop'
 userModal.innerHTML = `
   <div class="modal">
-    <div class="modal-header">
-      <h3>User erstellen</h3>
+  <div class="modal-header">
+      <h3 id="modalTitle">User erstellen</h3>
       <button type="button" class="modal-close" aria-label="Schliessen">×</button>
     </div>
   <div class="modal-body">
@@ -544,6 +548,7 @@ const resetLinkBox = usersCard.querySelector('#resetLinkBox')
 const modalCloseButton = userModal.querySelector('.modal-close')
 const modalCancelButton = userModal.querySelector('#modalCancel')
 const modalCreateUserButton = userModal.querySelector('#modalCreateUser')
+const modalTitle = userModal.querySelector('#modalTitle')
 const modalUserName = userModal.querySelector('#modalUserName')
 const modalUserEmail = userModal.querySelector('#modalUserEmail')
 const modalUserPassword = userModal.querySelector('#modalUserPassword')
@@ -1523,14 +1528,18 @@ function renderUsers() {
   }
   state.users.forEach((user) => {
     const row = document.createElement('tr')
-    const status = user.must_set_password ? 'Reset nötig' : 'Aktiv'
+    const status = Number(user.must_set_password) === 1 ? 'Reset nötig' : 'Aktiv'
     row.innerHTML = `
       <td>${user.id}</td>
       <td>${escapeHtml(user.name || '')}</td>
       <td>${escapeHtml(user.email || '')}</td>
       <td>${status}</td>
       <td>${user.last_login_at ? formatDate(user.last_login_at) : '-'}</td>
-      <td><button class="ghost" data-action="reset" data-id="${user.id}">Reset</button></td>
+      <td>
+        <button class="ghost" data-action="edit" data-id="${user.id}">Bearbeiten</button>
+        <button class="ghost" data-action="reset" data-id="${user.id}">Reset</button>
+        <button class="danger" data-action="delete" data-id="${user.id}">Löschen</button>
+      </td>
     `
     usersBody.appendChild(row)
   })
@@ -1546,6 +1555,38 @@ function renderUsers() {
         renderResetLink()
         await copyResetLink(state.lastResetLink)
         setStatus(`Reset-Link für User ${id} kopiert`, false)
+      } catch (error) {
+        setStatus(error.message, true)
+      } finally {
+        button.disabled = false
+      }
+    })
+  })
+
+  usersBody.querySelectorAll('button[data-action="edit"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const id = Number(button.dataset.id)
+      const user = state.users.find((item) => Number(item.id) === id)
+      if (!user) return
+      openUserModalForEdit(user)
+    })
+  })
+
+  usersBody.querySelectorAll('button[data-action="delete"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = Number(button.dataset.id)
+      if (!id) return
+      const confirmed = window.confirm('User wirklich löschen?')
+      if (!confirmed) return
+      button.disabled = true
+      try {
+        await deleteUser({ token: state.token, id })
+        if (state.currentUserId === id) {
+          handleLogout()
+          return
+        }
+        await loadUsers()
+        setStatus(`User ${id} gelöscht`, false)
       } catch (error) {
         setStatus(error.message, true)
       } finally {
@@ -1692,6 +1733,7 @@ async function handleLogin() {
   try {
     const result = await loginUser({ email, password })
     state.token = result.token
+    state.currentUserId = result.user?.id || null
     state.bootstrapMode = false
     localStorage.setItem('admin_jwt', state.token)
     state.loggedIn = true
@@ -1760,11 +1802,12 @@ async function handleBootstrapCreateUser() {
     state.lastResetLink = buildResetLink(result.reset_token)
     await copyResetLink(state.lastResetLink)
     state.bootstrapMode = false
+    state.bootstrapRequired = false
     state.loggedIn = false
     state.token = ''
     localStorage.removeItem('admin_jwt')
     setStatus(`User erstellt. Reset-Link kopiert`, false)
-    setAuthSection('set-password')
+    setAuthSection('login')
     applyVisibility()
   })
 }
@@ -1779,6 +1822,16 @@ async function handleCreateUser() {
   const password = modalUserPassword.value
   const passwordConfirm = modalUserPasswordConfirm.value
   const useReset = password.length === 0 && passwordConfirm.length === 0
+
+  if (state.editingUserId) {
+    await runWithButtonFeedback(modalCreateUserButton, async () => {
+      await updateUser({ token: state.token, id: state.editingUserId, name, email })
+      closeUserModal()
+      await loadUsers()
+      setStatus('User aktualisiert', false)
+    })
+    return
+  }
 
   if (!useReset) {
     if (!password || password.length < 8) {
@@ -1816,11 +1869,12 @@ async function handleCreateUser() {
 
     if (state.bootstrapMode) {
       state.bootstrapMode = false
+      state.bootstrapRequired = false
       state.loggedIn = false
       state.token = ''
       localStorage.removeItem('admin_jwt')
       setStatus(useReset ? 'User erstellt. Reset-Link kopiert' : 'User erstellt. Passwort gesetzt', false)
-      setAuthSection('set-password')
+      setAuthSection('login')
       applyVisibility()
       return
     }
@@ -1836,6 +1890,7 @@ async function handleLogout() {
   state.bootstrapMode = false
   state.users = []
   state.lastResetLink = ''
+  state.currentUserId = null
   localStorage.removeItem('admin_jwt')
   stopTokenRefresh()
   setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
@@ -2067,6 +2122,26 @@ async function copyResetLink(link) {
 }
 
 function openUserModal() {
+  state.editingUserId = null
+  modalTitle.textContent = 'User erstellen'
+  modalCreateUserButton.textContent = 'User erstellen'
+  modalUserPassword.parentElement.style.display = ''
+  modalUserPasswordConfirm.parentElement.style.display = ''
+  userModal.classList.add('is-visible')
+  modalUserName.focus()
+}
+
+function openUserModalForEdit(user) {
+  state.editingUserId = Number(user.id)
+  modalTitle.textContent = 'User bearbeiten'
+  modalCreateUserButton.textContent = 'Speichern'
+  modalUserName.value = user.name || ''
+  modalUserEmail.value = user.email || ''
+  modalUserPassword.value = ''
+  modalUserPasswordConfirm.value = ''
+  modalResetLink.innerHTML = ''
+  modalUserPassword.parentElement.style.display = 'none'
+  modalUserPasswordConfirm.parentElement.style.display = 'none'
   userModal.classList.add('is-visible')
   modalUserName.focus()
 }
@@ -2074,6 +2149,11 @@ function openUserModal() {
 function closeUserModal() {
   userModal.classList.remove('is-visible')
   modalResetLink.innerHTML = ''
+  modalUserName.value = ''
+  modalUserEmail.value = ''
+  modalUserPassword.value = ''
+  modalUserPasswordConfirm.value = ''
+  state.editingUserId = null
 }
 
 function renderModalResetLink(link) {

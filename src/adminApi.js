@@ -344,6 +344,32 @@ export async function createUser({ token, name, email, password }) {
   return response.json()
 }
 
+export async function updateUser({ token, id, name, email }) {
+  const response = await fetch(`${API_BASE}/admin_users.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action: 'update', id, name, email }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
+export async function deleteUser({ token, id }) {
+  const response = await fetch(`${API_BASE}/admin_users.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action: 'delete', id }),
+  })
+  if (!response.ok) {
+    const message = await parseError(response)
+    throw new Error(message)
+  }
+  return response.json()
+}
+
 export async function resetUserPassword({ token, id }) {
   const response = await fetch(`${API_BASE}/admin_users.php`, {
     method: 'POST',
