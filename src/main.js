@@ -1,5 +1,20 @@
 import './style.css'
-import { deletePins, fetchAdminPins, updatePinApprovalBulk } from './adminApi'
+import {
+  deleteLanguage,
+  deleteOption,
+  deletePins,
+  fetchAdminPins,
+  fetchLanguages,
+  fetchOptions,
+  fetchQuestions,
+  fetchTranslations,
+  toggleLanguage,
+  updatePinApprovalBulk,
+  upsertLanguage,
+  upsertOption,
+  upsertQuestion,
+  upsertTranslation,
+} from './adminApi'
 
 const app = document.querySelector('#app')
 
@@ -11,6 +26,11 @@ const state = {
   filter: 'all',
   sort: 'newest',
   loggedIn: false,
+  languages: [],
+  questions: [],
+  options: [],
+  translations: {},
+  selectedLanguage: 'de',
 }
 
 const layout = document.createElement('div')
@@ -88,6 +108,7 @@ tableCard.innerHTML = `
           <th>Etage</th>
           <th>Wohlbefinden</th>
           <th>Gründe</th>
+          <th>Gruppe</th>
           <th>Notiz</th>
           <th>Erstellt</th>
           <th>Freigabe</th>
@@ -98,6 +119,45 @@ tableCard.innerHTML = `
   </div>
 `
 layout.appendChild(tableCard)
+
+const languagesCard = document.createElement('section')
+languagesCard.className = 'card languages-card'
+languagesCard.innerHTML = `
+  <div class="card-header">
+    <h2>Sprachen</h2>
+  </div>
+  <div class="language-tools">
+    <select id="languageSelect"></select>
+    <input type="text" id="languageCode" placeholder="Code (z.B. de)" />
+    <input type="text" id="languageLabel" placeholder="Label (z.B. Deutsch)" />
+    <button id="addLanguage">Hinzufügen</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Label</th>
+          <th>Aktiv</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="languagesBody"></tbody>
+    </table>
+  </div>
+`
+layout.appendChild(languagesCard)
+
+const questionnaireCard = document.createElement('section')
+questionnaireCard.className = 'card questionnaire-card'
+questionnaireCard.innerHTML = `
+  <div class="card-header">
+    <h2>Fragebogen</h2>
+    <button id="reloadQuestionnaire" class="ghost">Neu laden</button>
+  </div>
+  <div id="questionsBody" class="questionnaire-body"></div>
+`
+layout.appendChild(questionnaireCard)
 
 app.appendChild(layout)
 
@@ -114,6 +174,13 @@ const blockSelected = tableCard.querySelector('#blockSelected')
 const deleteSelected = tableCard.querySelector('#deleteSelected')
 const selectAll = tableCard.querySelector('#selectAll')
 const pinsBody = tableCard.querySelector('#pinsBody')
+const languageSelect = languagesCard.querySelector('#languageSelect')
+const languageCode = languagesCard.querySelector('#languageCode')
+const languageLabel = languagesCard.querySelector('#languageLabel')
+const addLanguageButton = languagesCard.querySelector('#addLanguage')
+const languagesBody = languagesCard.querySelector('#languagesBody')
+const reloadQuestionnaireButton = questionnaireCard.querySelector('#reloadQuestionnaire')
+const questionsBody = questionnaireCard.querySelector('#questionsBody')
 
 tokenInput.value = state.token
 
@@ -131,6 +198,30 @@ sortSelect.addEventListener('change', (event) => {
   state.sort = event.target.value
   renderPins()
 })
+
+languageSelect.addEventListener('change', (event) => {
+  state.selectedLanguage = event.target.value
+  loadTranslations()
+})
+
+addLanguageButton.addEventListener('click', async () => {
+  const lang = languageCode.value.trim().toLowerCase()
+  const label = languageLabel.value.trim()
+  if (!lang || !label) {
+    setStatus('Bitte Code und Label angeben', true)
+    return
+  }
+  try {
+    await upsertLanguage({ token: state.token, lang, label, enabled: true })
+    languageCode.value = ''
+    languageLabel.value = ''
+    await loadLanguages()
+  } catch (error) {
+    setStatus(error.message, true)
+  }
+})
+
+reloadQuestionnaireButton.addEventListener('click', () => loadQuestionnaire())
 
 approveSelected.addEventListener('click', () => bulkUpdateApproval(1))
 pendingSelected.addEventListener('click', () => bulkUpdateApproval(0))
@@ -160,6 +251,401 @@ async function loadPins() {
   }
 }
 
+async function loadQuestionnaire() {
+  setStatus('Lade Fragebogen...', false)
+  try {
+    await loadLanguages()
+    await Promise.all([loadQuestions(), loadOptions(), loadTranslations()])
+    renderLanguages()
+    renderQuestions()
+    setStatus('Fragebogen geladen', false)
+  } catch (error) {
+    setStatus(error.message, true)
+  }
+}
+
+async function loadLanguages() {
+  const languages = await fetchLanguages({ token: state.token })
+  state.languages = languages
+  if (!state.selectedLanguage || !languages.find((lang) => lang.lang === state.selectedLanguage)) {
+    state.selectedLanguage = languages[0]?.lang || 'de'
+  }
+  languageSelect.innerHTML = ''
+  state.languages.forEach((language) => {
+    const option = document.createElement('option')
+    option.value = language.lang
+    option.textContent = `${language.label} (${language.lang})`
+    languageSelect.appendChild(option)
+  })
+  languageSelect.value = state.selectedLanguage
+}
+
+async function loadQuestions() {
+  state.questions = await fetchQuestions({ token: state.token })
+}
+
+async function loadOptions() {
+  state.options = await fetchOptions({ token: state.token })
+}
+
+async function loadTranslations() {
+  const [questionTranslations, optionTranslations] = await Promise.all([
+    fetchTranslations({ lang: state.selectedLanguage, prefix: 'questions.' }),
+    fetchTranslations({ lang: state.selectedLanguage, prefix: 'options.' }),
+  ])
+  state.translations = { ...questionTranslations, ...optionTranslations }
+  renderQuestions()
+  renderPins()
+}
+
+function renderLanguages() {
+  languagesBody.innerHTML = ''
+  if (!state.languages.length) {
+    const row = document.createElement('tr')
+    row.innerHTML = `<td colspan="4" class="empty">Keine Sprachen vorhanden</td>`
+    languagesBody.appendChild(row)
+    return
+  }
+
+  state.languages.forEach((language) => {
+    const row = document.createElement('tr')
+    row.innerHTML = `
+      <td>${language.lang}</td>
+      <td>${language.label}</td>
+      <td>
+        <input type="checkbox" data-lang="${language.lang}" ${language.enabled ? 'checked' : ''} />
+      </td>
+      <td>
+        <button class="ghost" data-action="delete" data-lang="${language.lang}">Löschen</button>
+      </td>
+    `
+    languagesBody.appendChild(row)
+  })
+
+  languagesBody.querySelectorAll('input[type="checkbox"][data-lang]').forEach((input) => {
+    input.addEventListener('change', async () => {
+      const lang = input.dataset.lang
+      try {
+        await toggleLanguage({ token: state.token, lang, enabled: input.checked })
+        await loadLanguages()
+        renderLanguages()
+      } catch (error) {
+        setStatus(error.message, true)
+      }
+    })
+  })
+
+  languagesBody.querySelectorAll('button[data-action="delete"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const lang = button.dataset.lang
+      const confirmed = window.confirm(`Sprache "${lang}" löschen?`)
+      if (!confirmed) return
+      try {
+        await deleteLanguage({ token: state.token, lang })
+        await loadLanguages()
+        renderLanguages()
+      } catch (error) {
+        setStatus(error.message, true)
+      }
+    })
+  })
+}
+
+function renderQuestions() {
+  questionsBody.innerHTML = ''
+  if (!state.questions.length) {
+    questionsBody.innerHTML = '<div class="empty">Keine Fragen vorhanden</div>'
+    return
+  }
+
+  const optionsByQuestion = new Map()
+  state.options.forEach((option) => {
+    if (!optionsByQuestion.has(option.question_key)) {
+      optionsByQuestion.set(option.question_key, [])
+    }
+    optionsByQuestion.get(option.question_key).push(option)
+  })
+
+  state.questions.forEach((question) => {
+    const wrapper = document.createElement('div')
+    wrapper.className = 'question-block'
+
+    const header = document.createElement('div')
+    header.className = 'question-header'
+    header.innerHTML = `
+      <div>
+        <strong>${question.question_key}</strong>
+        <span class="muted">(${question.type})</span>
+      </div>
+    `
+    wrapper.appendChild(header)
+
+    const labelKey = `questions.${question.question_key}.label`
+    const labelInput = createInput('text', getTranslation(labelKey))
+
+    const requiredToggle = createCheckbox(question.required)
+    const activeToggle = createCheckbox(question.is_active)
+    const sortInput = createInput('number', String(question.sort ?? 0))
+
+    const controlsRow = document.createElement('div')
+    controlsRow.className = 'question-row'
+    controlsRow.appendChild(createLabeled('Label', labelInput))
+    controlsRow.appendChild(createLabeled('Required', requiredToggle))
+    controlsRow.appendChild(createLabeled('Aktiv', activeToggle))
+    controlsRow.appendChild(createLabeled('Sort', sortInput))
+    wrapper.appendChild(controlsRow)
+
+    const configRow = document.createElement('div')
+    configRow.className = 'question-row'
+
+    if (question.type === 'slider') {
+      const minInput = createInput('number', String(question.config?.min ?? 1))
+      const maxInput = createInput('number', String(question.config?.max ?? 10))
+      const stepInput = createInput('number', String(question.config?.step ?? 1))
+      const defaultInput = createInput('number', String(question.config?.default ?? 6))
+      const legendLowKey = `questions.${question.question_key}.legend_low`
+      const legendHighKey = `questions.${question.question_key}.legend_high`
+      const legendLowInput = createInput('text', getTranslation(legendLowKey))
+      const legendHighInput = createInput('text', getTranslation(legendHighKey))
+      configRow.appendChild(createLabeled('Min', minInput))
+      configRow.appendChild(createLabeled('Max', maxInput))
+      configRow.appendChild(createLabeled('Step', stepInput))
+      configRow.appendChild(createLabeled('Default', defaultInput))
+      configRow.appendChild(createLabeled('Legend low', legendLowInput))
+      configRow.appendChild(createLabeled('Legend high', legendHighInput))
+      wrapper.appendChild(configRow)
+
+      const saveButton = createButton('Speichern')
+      saveButton.addEventListener('click', async () => {
+        await saveQuestion({
+          question_key: question.question_key,
+          type: question.type,
+          required: requiredToggle.checked,
+          sort: Number(sortInput.value || 0),
+          is_active: activeToggle.checked,
+          config: {
+            min: Number(minInput.value || 1),
+            max: Number(maxInput.value || 10),
+            step: Number(stepInput.value || 1),
+            default: Number(defaultInput.value || 6),
+          },
+          translations: {
+            [labelKey]: labelInput.value.trim(),
+            [legendLowKey]: legendLowInput.value.trim(),
+            [legendHighKey]: legendHighInput.value.trim(),
+          },
+        })
+      })
+      wrapper.appendChild(saveButton)
+    } else if (question.type === 'text') {
+      const rowsInput = createInput('number', String(question.config?.rows ?? 3))
+      configRow.appendChild(createLabeled('Rows', rowsInput))
+      wrapper.appendChild(configRow)
+
+      const saveButton = createButton('Speichern')
+      saveButton.addEventListener('click', async () => {
+        await saveQuestion({
+          question_key: question.question_key,
+          type: question.type,
+          required: requiredToggle.checked,
+          sort: Number(sortInput.value || 0),
+          is_active: activeToggle.checked,
+          config: { rows: Number(rowsInput.value || 3) },
+          translations: {
+            [labelKey]: labelInput.value.trim(),
+          },
+        })
+      })
+      wrapper.appendChild(saveButton)
+    } else if (question.type === 'multi') {
+      const allowMultiple = createCheckbox(Boolean(question.config?.allow_multiple))
+      configRow.appendChild(createLabeled('Mehrfach', allowMultiple))
+      wrapper.appendChild(configRow)
+
+      const saveButton = createButton('Speichern')
+      saveButton.addEventListener('click', async () => {
+        await saveQuestion({
+          question_key: question.question_key,
+          type: question.type,
+          required: requiredToggle.checked,
+          sort: Number(sortInput.value || 0),
+          is_active: activeToggle.checked,
+          config: { allow_multiple: allowMultiple.checked },
+          translations: {
+            [labelKey]: labelInput.value.trim(),
+          },
+        })
+      })
+      wrapper.appendChild(saveButton)
+    }
+
+    const optionList = optionsByQuestion.get(question.question_key) || []
+    if (optionList.length || question.type === 'multi') {
+      const optionWrap = document.createElement('div')
+      optionWrap.className = 'option-list'
+      optionWrap.innerHTML = '<h3>Optionen</h3>'
+
+      optionList.forEach((option) => {
+        const optionRow = document.createElement('div')
+        optionRow.className = 'option-row'
+        const optionLabelKey = `options.${question.question_key}.${option.option_key}`
+        const optionLabelInput = createInput('text', getTranslation(optionLabelKey))
+        const optionSortInput = createInput('number', String(option.sort ?? 0))
+        const optionActive = createCheckbox(option.is_active)
+        const saveOptionButton = createButton('Speichern')
+        const deleteOptionButton = createButton('Löschen', 'danger')
+
+        saveOptionButton.addEventListener('click', async () => {
+          await saveOption({
+            question_key: question.question_key,
+            option_key: option.option_key,
+            sort: Number(optionSortInput.value || 0),
+            is_active: optionActive.checked,
+            translation_key: optionLabelKey,
+            label: optionLabelInput.value.trim(),
+          })
+        })
+        deleteOptionButton.addEventListener('click', async () => {
+          const confirmed = window.confirm(`Option "${option.option_key}" löschen?`)
+          if (!confirmed) return
+          try {
+            await deleteOption({ token: state.token, question_key: question.question_key, option_key: option.option_key })
+            await loadOptions()
+            await loadTranslations()
+            renderQuestions()
+          } catch (error) {
+            setStatus(error.message, true)
+          }
+        })
+
+        optionRow.appendChild(createLabeled('Key', createInput('text', option.option_key, true)))
+        optionRow.appendChild(createLabeled('Label', optionLabelInput))
+        optionRow.appendChild(createLabeled('Sort', optionSortInput))
+        optionRow.appendChild(createLabeled('Aktiv', optionActive))
+        optionRow.appendChild(saveOptionButton)
+        optionRow.appendChild(deleteOptionButton)
+        optionWrap.appendChild(optionRow)
+      })
+
+      const addRow = document.createElement('div')
+      addRow.className = 'option-row'
+      const newKeyInput = createInput('text', '')
+      const newLabelInput = createInput('text', '')
+      const newSortInput = createInput('number', '0')
+      const newActive = createCheckbox(true)
+      const addButton = createButton('Hinzufügen')
+      addButton.addEventListener('click', async () => {
+        const optionKey = newKeyInput.value.trim()
+        if (!optionKey) {
+          setStatus('Option-Key fehlt', true)
+          return
+        }
+        const optionLabelKey = `options.${question.question_key}.${optionKey}`
+        await saveOption({
+          question_key: question.question_key,
+          option_key: optionKey,
+          sort: Number(newSortInput.value || 0),
+          is_active: newActive.checked,
+          translation_key: optionLabelKey,
+          label: newLabelInput.value.trim(),
+        })
+        newKeyInput.value = ''
+        newLabelInput.value = ''
+        newSortInput.value = '0'
+        newActive.checked = true
+      })
+      addRow.appendChild(createLabeled('Key', newKeyInput))
+      addRow.appendChild(createLabeled('Label', newLabelInput))
+      addRow.appendChild(createLabeled('Sort', newSortInput))
+      addRow.appendChild(createLabeled('Aktiv', newActive))
+      addRow.appendChild(addButton)
+      optionWrap.appendChild(addRow)
+
+      wrapper.appendChild(optionWrap)
+    }
+
+    questionsBody.appendChild(wrapper)
+  })
+}
+
+async function saveQuestion({ question_key, type, required, sort, is_active, config, translations }) {
+  try {
+    await upsertQuestion({
+      token: state.token,
+      question: { question_key, type, required, sort, is_active, config },
+    })
+    await saveTranslations(translations)
+    await loadQuestions()
+    await loadTranslations()
+    renderQuestions()
+    setStatus('Frage gespeichert', false)
+  } catch (error) {
+    setStatus(error.message, true)
+  }
+}
+
+async function saveOption({ question_key, option_key, sort, is_active, translation_key, label }) {
+  try {
+    await upsertOption({
+      token: state.token,
+      option: { question_key, option_key, sort, is_active },
+    })
+    await saveTranslations({ [translation_key]: label })
+    await loadOptions()
+    await loadTranslations()
+    renderQuestions()
+    setStatus('Option gespeichert', false)
+  } catch (error) {
+    setStatus(error.message, true)
+  }
+}
+
+async function saveTranslations(translations) {
+  const entries = Object.entries(translations || {})
+  for (const [translation_key, text] of entries) {
+    await upsertTranslation({ token: state.token, translation_key, lang: state.selectedLanguage, text })
+  }
+}
+
+function getTranslation(key) {
+  return state.translations[key] || ''
+}
+
+function createInput(type, value, readOnly = false) {
+  const input = document.createElement('input')
+  input.type = type
+  input.value = value ?? ''
+  input.readOnly = readOnly
+  return input
+}
+
+function createCheckbox(checked) {
+  const input = document.createElement('input')
+  input.type = 'checkbox'
+  input.checked = Boolean(checked)
+  return input
+}
+
+function createButton(label, variant) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.textContent = label
+  if (variant === 'danger') {
+    button.classList.add('danger')
+  }
+  return button
+}
+
+function createLabeled(label, element) {
+  const wrapper = document.createElement('label')
+  wrapper.className = 'field'
+  const text = document.createElement('span')
+  text.textContent = label
+  wrapper.appendChild(text)
+  wrapper.appendChild(element)
+  return wrapper
+}
+
 function normalizePin(pin) {
   return {
     ...pin,
@@ -170,6 +656,7 @@ function normalizePin(pin) {
     position_z: Number(pin.position_z),
     wellbeing: Number(pin.wellbeing),
     approved: Number(pin.approved),
+    group_key: pin.group_key || null,
   }
 }
 
@@ -180,14 +667,17 @@ function renderPins() {
   const filteredPins = getFilteredPins()
   if (!filteredPins.length) {
     const row = document.createElement('tr')
-    row.innerHTML = `<td colspan="8" class="empty">Keine Pins vorhanden</td>`
+    row.innerHTML = `<td colspan="9" class="empty">Keine Pins vorhanden</td>`
     pinsBody.appendChild(row)
     return
   }
 
   filteredPins.forEach((pin) => {
     const row = document.createElement('tr')
-    const reasons = Array.isArray(pin.reasons) ? pin.reasons.join(', ') : ''
+    const reasons = Array.isArray(pin.reasons)
+      ? pin.reasons.map((key) => translateOption('reasons', key)).join(', ')
+      : ''
+    const groupLabel = pin.group_key ? translateOption('group', pin.group_key) : ''
     const statusLabel = getStatusLabel(pin.approved)
     row.innerHTML = `
       <td><input type="checkbox" data-id="${pin.id}" /></td>
@@ -195,6 +685,7 @@ function renderPins() {
       <td>${pin.floor_index}</td>
       <td>${pin.wellbeing}/10</td>
       <td>${reasons}</td>
+      <td>${groupLabel}</td>
       <td>${escapeHtml(pin.note || '')}</td>
       <td>${formatDate(pin.created_at)}</td>
       <td>
@@ -239,6 +730,11 @@ function getStatusLabel(status) {
   if (status === 1) return 'Freigegeben'
   if (status === -1) return 'Abgelehnt'
   return 'Wartet'
+}
+
+function translateOption(questionKey, optionKey) {
+  const key = `options.${questionKey}.${optionKey}`
+  return state.translations[key] || optionKey
 }
 
 function getStatusClass(status) {
@@ -300,6 +796,7 @@ async function handleLogin() {
   if (!state.error) {
     state.loggedIn = true
     applyVisibility()
+    await loadQuestionnaire()
   }
 }
 
@@ -307,6 +804,8 @@ function applyVisibility() {
   loginCard.style.display = state.loggedIn ? 'none' : 'block'
   toolsCard.style.display = state.loggedIn ? 'block' : 'none'
   tableCard.style.display = state.loggedIn ? 'block' : 'none'
+  languagesCard.style.display = state.loggedIn ? 'block' : 'none'
+  questionnaireCard.style.display = state.loggedIn ? 'block' : 'none'
 }
 
 function getFilteredPins() {
@@ -323,6 +822,7 @@ function getFilteredPins() {
       pin.wellbeing,
       pin.note || '',
       Array.isArray(pin.reasons) ? pin.reasons.join(' ') : '',
+      pin.group_key || '',
     ]
       .join(' ')
       .toLowerCase()

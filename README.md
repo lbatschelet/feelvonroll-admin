@@ -9,6 +9,12 @@ npm install
 npm run dev
 ```
 
+## Tests
+
+```bash
+npm test
+```
+
 ## API
 
 - Default expects API at `/api`
