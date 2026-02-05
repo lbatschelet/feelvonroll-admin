@@ -131,7 +131,7 @@ loginCard.innerHTML = `
       <input type="email" id="bootstrapEmail" placeholder="name@domain.ch" />
     </div>
     <div class="form-actions">
-      <button id="bootstrapCreateUser">User erstellen</button>
+    <button type="button" id="bootstrapCreateUser">User erstellen</button>
     </div>
   </div>
 `
@@ -374,7 +374,7 @@ usersCard.innerHTML = `
         <span>Email</span>
         <input type="email" id="newUserEmail" placeholder="name@domain.ch" />
       </label>
-      <button id="addUser">User erstellen</button>
+      <button type="button" id="addUser">User erstellen</button>
     </div>
   </div>
   <div class="table-wrap">
@@ -1701,21 +1701,20 @@ async function handleBootstrapCreateUser() {
     setStatus('Name und Email fehlen', true)
     return
   }
-  try {
+  await runWithButtonFeedback(bootstrapCreateUser, async () => {
     const result = await createUser({ token: state.token, name, email })
     bootstrapName.value = ''
     bootstrapEmail.value = ''
+    state.lastResetLink = buildResetLink(result.reset_token)
+    openResetLink(state.lastResetLink)
     state.bootstrapMode = false
     state.loggedIn = false
     state.token = ''
     localStorage.removeItem('admin_jwt')
-    state.lastResetLink = buildResetLink(result.reset_token)
     setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
     setAuthSection('set-password')
     applyVisibility()
-  } catch (error) {
-    setStatus(error.message, true)
-  }
+  })
 }
 
 async function handleCreateUser() {
@@ -1725,16 +1724,16 @@ async function handleCreateUser() {
     setStatus('Name und Email fehlen', true)
     return
   }
-  try {
+  await runWithButtonFeedback(addUserButton, async () => {
     const result = await createUser({ token: state.token, name, email })
     newUserName.value = ''
     newUserEmail.value = ''
     state.lastResetLink = buildResetLink(result.reset_token)
+    openResetLink(state.lastResetLink)
+    renderResetLink()
     await loadUsers()
     setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
-  } catch (error) {
-    setStatus(error.message, true)
-  }
+  })
 }
 
 async function handleLogout() {
@@ -1952,4 +1951,12 @@ function buildResetLink(resetToken) {
   const url = new URL(window.location.href)
   url.searchParams.set('reset_token', resetToken)
   return url.toString()
+}
+
+function openResetLink(link) {
+  if (!link) return
+  const popup = window.open(link, '_blank', 'noopener')
+  if (!popup) {
+    setStatus('Popup blockiert. Bitte Reset-Link manuell öffnen.', true)
+  }
 }
