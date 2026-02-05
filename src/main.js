@@ -199,19 +199,23 @@ questionnaireCard.innerHTML = `
     <div class="question-row slider-only">
       <label class="field">
         <span>Min</span>
-        <input type="number" id="newQuestionMin" value="1" />
+        <input type="number" id="newQuestionMin" value="0" />
       </label>
       <label class="field">
         <span>Max</span>
-        <input type="number" id="newQuestionMax" value="10" />
+        <input type="number" id="newQuestionMax" value="1" />
       </label>
       <label class="field">
         <span>Step</span>
-        <input type="number" id="newQuestionStep" value="1" />
+        <input type="number" id="newQuestionStep" value="0.01" />
       </label>
       <label class="field">
         <span>Default</span>
-        <input type="number" id="newQuestionDefault" value="5" />
+        <input type="number" id="newQuestionDefault" value="0.5" />
+      </label>
+      <label class="field">
+        <span>Pin-Farbe</span>
+        <input type="checkbox" id="newQuestionUseForColor" />
       </label>
     </div>
     <div class="question-row multi-only">
@@ -266,6 +270,7 @@ const newQuestionMin = questionnaireCard.querySelector('#newQuestionMin')
 const newQuestionMax = questionnaireCard.querySelector('#newQuestionMax')
 const newQuestionStep = questionnaireCard.querySelector('#newQuestionStep')
 const newQuestionDefault = questionnaireCard.querySelector('#newQuestionDefault')
+const newQuestionUseForColor = questionnaireCard.querySelector('#newQuestionUseForColor')
 const newQuestionAllowMultiple = questionnaireCard.querySelector('#newQuestionAllowMultiple')
 const newQuestionRows = questionnaireCard.querySelector('#newQuestionRows')
 const addQuestionButton = questionnaireCard.querySelector('#addQuestion')
@@ -341,10 +346,11 @@ addQuestionButton.addEventListener('click', async () => {
 
   if (type === 'slider') {
     base.config = {
-      min: Number(newQuestionMin.value || 1),
-      max: Number(newQuestionMax.value || 10),
-      step: Number(newQuestionStep.value || 1),
-      default: Number(newQuestionDefault.value || 5),
+      min: Number(newQuestionMin.value || 0),
+      max: Number(newQuestionMax.value || 1),
+      step: Number(newQuestionStep.value || 0.01),
+      default: Number(newQuestionDefault.value || 0.5),
+      use_for_color: newQuestionUseForColor.checked,
     }
     translations[`questions.${key}.legend_low`] = newQuestionLegendLow.value.trim()
     translations[`questions.${key}.legend_high`] = newQuestionLegendHigh.value.trim()
@@ -365,6 +371,7 @@ addQuestionButton.addEventListener('click', async () => {
     newQuestionLabel.value = ''
     newQuestionLegendLow.value = ''
     newQuestionLegendHigh.value = ''
+    newQuestionUseForColor.checked = false
     await loadQuestions()
     await loadOptions()
     await loadTranslations()
@@ -549,10 +556,11 @@ function renderQuestions() {
     configRow.className = 'question-row'
 
     if (question.type === 'slider') {
-      const minInput = createInput('number', String(question.config?.min ?? 1))
-      const maxInput = createInput('number', String(question.config?.max ?? 10))
-      const stepInput = createInput('number', String(question.config?.step ?? 1))
-      const defaultInput = createInput('number', String(question.config?.default ?? 6))
+      const minInput = createInput('number', String(question.config?.min ?? 0))
+      const maxInput = createInput('number', String(question.config?.max ?? 1))
+      const stepInput = createInput('number', String(question.config?.step ?? 0.01))
+      const defaultInput = createInput('number', String(question.config?.default ?? 0.5))
+      const useForColor = createCheckbox(Boolean(question.config?.use_for_color))
       const legendLowKey = `questions.${question.question_key}.legend_low`
       const legendHighKey = `questions.${question.question_key}.legend_high`
       const legendLowInput = createInput('text', getTranslation(legendLowKey))
@@ -561,6 +569,7 @@ function renderQuestions() {
       configRow.appendChild(createLabeled('Max', maxInput))
       configRow.appendChild(createLabeled('Step', stepInput))
       configRow.appendChild(createLabeled('Default', defaultInput))
+      configRow.appendChild(createLabeled('Pin-Farbe', useForColor))
       configRow.appendChild(createLabeled('Legend low', legendLowInput))
       configRow.appendChild(createLabeled('Legend high', legendHighInput))
       wrapper.appendChild(configRow)
@@ -574,10 +583,11 @@ function renderQuestions() {
           sort: Number(sortInput.value || 0),
           is_active: activeToggle.checked,
           config: {
-            min: Number(minInput.value || 1),
-            max: Number(maxInput.value || 10),
-            step: Number(stepInput.value || 1),
-            default: Number(defaultInput.value || 6),
+            min: Number(minInput.value || 0),
+            max: Number(maxInput.value || 1),
+            step: Number(stepInput.value || 0.01),
+            default: Number(defaultInput.value || 0.5),
+            use_for_color: useForColor.checked,
           },
           translations: {
             [labelKey]: labelInput.value.trim(),
@@ -864,7 +874,7 @@ function renderPins() {
       <td><input type="checkbox" data-id="${pin.id}" /></td>
       <td>${pin.id}</td>
       <td>${pin.floor_index}</td>
-      <td>${pin.wellbeing}/10</td>
+      <td>${formatPercent(pin.wellbeing)}</td>
       <td>${reasons}</td>
       <td>${groupLabel}</td>
       <td>${escapeHtml(pin.note || '')}</td>
@@ -1034,6 +1044,16 @@ function formatDate(value) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleString('de-CH')
+}
+
+function formatPercent(value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return '-'
+  const formatted = numeric.toLocaleString('de-CH', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+  return `${formatted}%`
 }
 
 function escapeHtml(value) {
