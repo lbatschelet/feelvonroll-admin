@@ -432,12 +432,7 @@ userModal.innerHTML = `
         />
       </label>
     </div>
-    <div class="question-row">
-      <label class="field checkbox-field">
-        <input type="checkbox" id="modalUserUseReset" />
-        <span>Reset-Link erstellen statt Passwort setzen</span>
-      </label>
-    </div>
+    <p class="modal-hint">Passwort leer lassen, um einen Reset-Link zu erstellen.</p>
     <div class="reset-link" id="modalResetLink"></div>
   </div>
     <div class="modal-actions">
@@ -553,7 +548,6 @@ const modalUserName = userModal.querySelector('#modalUserName')
 const modalUserEmail = userModal.querySelector('#modalUserEmail')
 const modalUserPassword = userModal.querySelector('#modalUserPassword')
 const modalUserPasswordConfirm = userModal.querySelector('#modalUserPasswordConfirm')
-const modalUserUseReset = userModal.querySelector('#modalUserUseReset')
 const modalResetLink = userModal.querySelector('#modalResetLink')
 const reloadAuditButton = auditCard.querySelector('#reloadAudit')
 const auditLimitSelect = auditCard.querySelector('#auditLimit')
@@ -643,7 +637,6 @@ reloadUsersButton.addEventListener('click', () => loadUsers())
 addUserButton.addEventListener('click', () => openUserModal())
 modalCloseButton.addEventListener('click', () => closeUserModal())
 modalCancelButton.addEventListener('click', () => closeUserModal())
-modalUserUseReset.addEventListener('change', () => updateUserModalMode())
 modalCreateUserButton.addEventListener('click', () => handleCreateUser())
 reloadAuditButton.addEventListener('click', () => loadAuditLogs())
 auditLimitSelect.addEventListener('change', (event) => {
@@ -1551,7 +1544,8 @@ function renderUsers() {
         const result = await resetUserPassword({ token: state.token, id })
         state.lastResetLink = buildResetLink(result.reset_token)
         renderResetLink()
-        setStatus(`Reset-Link (24h) für User ${id} bereit`, false)
+        await copyResetLink(state.lastResetLink)
+        setStatus(`Reset-Link für User ${id} kopiert`, false)
       } catch (error) {
         setStatus(error.message, true)
       } finally {
@@ -1578,12 +1572,7 @@ function renderResetLink() {
   `
   const copyButton = resetLinkBox.querySelector('#copyResetLink')
   copyButton.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(state.lastResetLink)
-      setStatus('Reset-Link kopiert', false)
-    } catch (error) {
-      setStatus('Kopieren fehlgeschlagen', true)
-    }
+    await copyResetLink(state.lastResetLink)
   })
 }
 
@@ -1769,12 +1758,12 @@ async function handleBootstrapCreateUser() {
     bootstrapName.value = ''
     bootstrapEmail.value = ''
     state.lastResetLink = buildResetLink(result.reset_token)
-    openResetLink(state.lastResetLink)
+    await copyResetLink(state.lastResetLink)
     state.bootstrapMode = false
     state.loggedIn = false
     state.token = ''
     localStorage.removeItem('admin_jwt')
-    setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
+    setStatus(`User erstellt. Reset-Link kopiert`, false)
     setAuthSection('set-password')
     applyVisibility()
   })
@@ -1787,9 +1776,9 @@ async function handleCreateUser() {
     setStatus('Name und Email fehlen', true)
     return
   }
-  const useReset = modalUserUseReset.checked
   const password = modalUserPassword.value
   const passwordConfirm = modalUserPasswordConfirm.value
+  const useReset = password.length === 0 && passwordConfirm.length === 0
 
   if (!useReset) {
     if (!password || password.length < 8) {
@@ -1814,14 +1803,13 @@ async function handleCreateUser() {
     modalUserEmail.value = ''
     modalUserPassword.value = ''
     modalUserPasswordConfirm.value = ''
-    modalUserUseReset.checked = false
     modalResetLink.innerHTML = ''
 
     if (useReset && result.reset_token) {
       state.lastResetLink = buildResetLink(result.reset_token)
-      openResetLink(state.lastResetLink)
       renderResetLink()
       renderModalResetLink(state.lastResetLink)
+      await copyResetLink(state.lastResetLink)
     }
 
     closeUserModal()
@@ -1831,14 +1819,14 @@ async function handleCreateUser() {
       state.loggedIn = false
       state.token = ''
       localStorage.removeItem('admin_jwt')
-      setStatus(useReset ? 'User erstellt. Reset-Link (24h) bereit' : 'User erstellt. Passwort gesetzt', false)
+      setStatus(useReset ? 'User erstellt. Reset-Link kopiert' : 'User erstellt. Passwort gesetzt', false)
       setAuthSection('set-password')
       applyVisibility()
       return
     }
 
     await loadUsers()
-    setStatus(useReset ? 'User erstellt. Reset-Link (24h) bereit' : 'User erstellt. Passwort gesetzt', false)
+    setStatus(useReset ? 'User erstellt. Reset-Link kopiert' : 'User erstellt. Passwort gesetzt', false)
   })
 }
 
@@ -2068,31 +2056,24 @@ function buildResetLink(resetToken) {
   return url.toString()
 }
 
-function openResetLink(link) {
+async function copyResetLink(link) {
   if (!link) return
-  const popup = window.open(link, '_blank', 'noopener')
-  if (!popup) {
-    setStatus('Popup blockiert. Bitte Reset-Link manuell öffnen.', true)
+  try {
+    await navigator.clipboard.writeText(link)
+    setStatus('Reset-Link kopiert', false)
+  } catch (error) {
+    setStatus('Kopieren fehlgeschlagen', true)
   }
 }
 
 function openUserModal() {
   userModal.classList.add('is-visible')
-  updateUserModalMode()
   modalUserName.focus()
 }
 
 function closeUserModal() {
   userModal.classList.remove('is-visible')
   modalResetLink.innerHTML = ''
-}
-
-function updateUserModalMode() {
-  const passwordRow = userModal.querySelector('.modal-password')
-  const disabled = modalUserUseReset.checked
-  passwordRow.style.display = 'grid'
-  modalUserPassword.disabled = disabled
-  modalUserPasswordConfirm.disabled = disabled
 }
 
 function renderModalResetLink(link) {
@@ -2108,11 +2089,6 @@ function renderModalResetLink(link) {
   `
   const copyButton = modalResetLink.querySelector('#copyModalResetLink')
   copyButton.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(link)
-      setStatus('Reset-Link kopiert', false)
-    } catch (error) {
-      setStatus('Kopieren fehlgeschlagen', true)
-    }
+    await copyResetLink(link)
   })
 }

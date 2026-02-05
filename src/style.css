@@ -300,15 +300,10 @@ button.error {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.checkbox-field {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-}
-
-.checkbox-field input {
-  transform: scale(1.1);
+.modal-hint {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  color: #475569;
 }
 
 .reset-link-box {
@@ -435,7 +430,9 @@ button.error {
 }
 
 .field input[type='text'],
-.field input[type='number'] {
+.field input[type='number'],
+.field input[type='email'],
+.field input[type='password'] {
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
