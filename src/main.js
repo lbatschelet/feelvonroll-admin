@@ -155,6 +155,79 @@ questionnaireCard.innerHTML = `
     <h2>Fragebogen</h2>
     <button id="reloadQuestionnaire" class="ghost">Neu laden</button>
   </div>
+  <div class="question-create">
+    <div class="question-row">
+      <label class="field">
+        <span>Key</span>
+        <input type="text" id="newQuestionKey" placeholder="z.B. wellbeing" />
+      </label>
+      <label class="field">
+        <span>Type</span>
+        <select id="newQuestionType">
+          <option value="slider">Slider</option>
+          <option value="multi">Multiple choice</option>
+          <option value="text">Text</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Required</span>
+        <input type="checkbox" id="newQuestionRequired" />
+      </label>
+      <label class="field">
+        <span>Aktiv</span>
+        <input type="checkbox" id="newQuestionActive" checked />
+      </label>
+      <label class="field">
+        <span>Sort</span>
+        <input type="number" id="newQuestionSort" value="50" />
+      </label>
+    </div>
+    <div class="question-row">
+      <label class="field">
+        <span>Label</span>
+        <input type="text" id="newQuestionLabel" placeholder="Fragetext" />
+      </label>
+      <label class="field slider-only">
+        <span>Legend low</span>
+        <input type="text" id="newQuestionLegendLow" />
+      </label>
+      <label class="field slider-only">
+        <span>Legend high</span>
+        <input type="text" id="newQuestionLegendHigh" />
+      </label>
+    </div>
+    <div class="question-row slider-only">
+      <label class="field">
+        <span>Min</span>
+        <input type="number" id="newQuestionMin" value="1" />
+      </label>
+      <label class="field">
+        <span>Max</span>
+        <input type="number" id="newQuestionMax" value="10" />
+      </label>
+      <label class="field">
+        <span>Step</span>
+        <input type="number" id="newQuestionStep" value="1" />
+      </label>
+      <label class="field">
+        <span>Default</span>
+        <input type="number" id="newQuestionDefault" value="5" />
+      </label>
+    </div>
+    <div class="question-row multi-only">
+      <label class="field">
+        <span>Mehrfach</span>
+        <input type="checkbox" id="newQuestionAllowMultiple" />
+      </label>
+    </div>
+    <div class="question-row text-only">
+      <label class="field">
+        <span>Rows</span>
+        <input type="number" id="newQuestionRows" value="3" />
+      </label>
+    </div>
+    <button id="addQuestion">Frage hinzufügen</button>
+  </div>
   <div id="questionsBody" class="questionnaire-body"></div>
 `
 layout.appendChild(questionnaireCard)
@@ -181,6 +254,21 @@ const addLanguageButton = languagesCard.querySelector('#addLanguage')
 const languagesBody = languagesCard.querySelector('#languagesBody')
 const reloadQuestionnaireButton = questionnaireCard.querySelector('#reloadQuestionnaire')
 const questionsBody = questionnaireCard.querySelector('#questionsBody')
+const newQuestionKey = questionnaireCard.querySelector('#newQuestionKey')
+const newQuestionType = questionnaireCard.querySelector('#newQuestionType')
+const newQuestionRequired = questionnaireCard.querySelector('#newQuestionRequired')
+const newQuestionActive = questionnaireCard.querySelector('#newQuestionActive')
+const newQuestionSort = questionnaireCard.querySelector('#newQuestionSort')
+const newQuestionLabel = questionnaireCard.querySelector('#newQuestionLabel')
+const newQuestionLegendLow = questionnaireCard.querySelector('#newQuestionLegendLow')
+const newQuestionLegendHigh = questionnaireCard.querySelector('#newQuestionLegendHigh')
+const newQuestionMin = questionnaireCard.querySelector('#newQuestionMin')
+const newQuestionMax = questionnaireCard.querySelector('#newQuestionMax')
+const newQuestionStep = questionnaireCard.querySelector('#newQuestionStep')
+const newQuestionDefault = questionnaireCard.querySelector('#newQuestionDefault')
+const newQuestionAllowMultiple = questionnaireCard.querySelector('#newQuestionAllowMultiple')
+const newQuestionRows = questionnaireCard.querySelector('#newQuestionRows')
+const addQuestionButton = questionnaireCard.querySelector('#addQuestion')
 
 tokenInput.value = state.token
 
@@ -223,6 +311,67 @@ addLanguageButton.addEventListener('click', async () => {
 
 reloadQuestionnaireButton.addEventListener('click', () => loadQuestionnaire())
 
+newQuestionType.addEventListener('change', () => updateQuestionCreateForm())
+
+addQuestionButton.addEventListener('click', async () => {
+  const key = newQuestionKey.value.trim()
+  const type = newQuestionType.value
+  if (!key) {
+    setStatus('Question-Key fehlt', true)
+    return
+  }
+  const label = newQuestionLabel.value.trim()
+  if (!label) {
+    setStatus('Label fehlt', true)
+    return
+  }
+
+  const base = {
+    question_key: key,
+    type,
+    required: newQuestionRequired.checked,
+    sort: Number(newQuestionSort.value || 0),
+    is_active: newQuestionActive.checked,
+    config: {},
+  }
+
+  const translations = {
+    [`questions.${key}.label`]: label,
+  }
+
+  if (type === 'slider') {
+    base.config = {
+      min: Number(newQuestionMin.value || 1),
+      max: Number(newQuestionMax.value || 10),
+      step: Number(newQuestionStep.value || 1),
+      default: Number(newQuestionDefault.value || 5),
+    }
+    translations[`questions.${key}.legend_low`] = newQuestionLegendLow.value.trim()
+    translations[`questions.${key}.legend_high`] = newQuestionLegendHigh.value.trim()
+  }
+
+  if (type === 'multi') {
+    base.config = { allow_multiple: newQuestionAllowMultiple.checked }
+  }
+
+  if (type === 'text') {
+    base.config = { rows: Number(newQuestionRows.value || 3) }
+  }
+
+  await runWithButtonFeedback(addQuestionButton, async () => {
+    await upsertQuestion({ token: state.token, question: base })
+    await saveTranslations(translations)
+    newQuestionKey.value = ''
+    newQuestionLabel.value = ''
+    newQuestionLegendLow.value = ''
+    newQuestionLegendHigh.value = ''
+    await loadQuestions()
+    await loadOptions()
+    await loadTranslations()
+    renderQuestions()
+  })
+})
+
 approveSelected.addEventListener('click', () => bulkUpdateApproval(1))
 pendingSelected.addEventListener('click', () => bulkUpdateApproval(0))
 blockSelected.addEventListener('click', () => bulkUpdateApproval(-1))
@@ -258,6 +407,7 @@ async function loadQuestionnaire() {
     await Promise.all([loadQuestions(), loadOptions(), loadTranslations()])
     renderLanguages()
     renderQuestions()
+    updateQuestionCreateForm()
     setStatus('Fragebogen geladen', false)
   } catch (error) {
     setStatus(error.message, true)
@@ -417,7 +567,7 @@ function renderQuestions() {
 
       const saveButton = createButton('Speichern')
       saveButton.addEventListener('click', async () => {
-        await saveQuestion({
+        await saveQuestion(saveButton, {
           question_key: question.question_key,
           type: question.type,
           required: requiredToggle.checked,
@@ -444,7 +594,7 @@ function renderQuestions() {
 
       const saveButton = createButton('Speichern')
       saveButton.addEventListener('click', async () => {
-        await saveQuestion({
+        await saveQuestion(saveButton, {
           question_key: question.question_key,
           type: question.type,
           required: requiredToggle.checked,
@@ -464,7 +614,7 @@ function renderQuestions() {
 
       const saveButton = createButton('Speichern')
       saveButton.addEventListener('click', async () => {
-        await saveQuestion({
+        await saveQuestion(saveButton, {
           question_key: question.question_key,
           type: question.type,
           required: requiredToggle.checked,
@@ -496,7 +646,7 @@ function renderQuestions() {
         const deleteOptionButton = createButton('Löschen', 'danger')
 
         saveOptionButton.addEventListener('click', async () => {
-          await saveOption({
+          await saveOption(saveOptionButton, {
             question_key: question.question_key,
             option_key: option.option_key,
             sort: Number(optionSortInput.value || 0),
@@ -541,7 +691,7 @@ function renderQuestions() {
           return
         }
         const optionLabelKey = `options.${question.question_key}.${optionKey}`
-        await saveOption({
+        await saveOption(addButton, {
           question_key: question.question_key,
           option_key: optionKey,
           sort: Number(newSortInput.value || 0),
@@ -568,8 +718,8 @@ function renderQuestions() {
   })
 }
 
-async function saveQuestion({ question_key, type, required, sort, is_active, config, translations }) {
-  try {
+async function saveQuestion(button, { question_key, type, required, sort, is_active, config, translations }) {
+  await runWithButtonFeedback(button, async () => {
     await upsertQuestion({
       token: state.token,
       question: { question_key, type, required, sort, is_active, config },
@@ -579,13 +729,11 @@ async function saveQuestion({ question_key, type, required, sort, is_active, con
     await loadTranslations()
     renderQuestions()
     setStatus('Frage gespeichert', false)
-  } catch (error) {
-    setStatus(error.message, true)
-  }
+  })
 }
 
-async function saveOption({ question_key, option_key, sort, is_active, translation_key, label }) {
-  try {
+async function saveOption(button, { question_key, option_key, sort, is_active, translation_key, label }) {
+  await runWithButtonFeedback(button, async () => {
     await upsertOption({
       token: state.token,
       option: { question_key, option_key, sort, is_active },
@@ -595,9 +743,7 @@ async function saveOption({ question_key, option_key, sort, is_active, translati
     await loadTranslations()
     renderQuestions()
     setStatus('Option gespeichert', false)
-  } catch (error) {
-    setStatus(error.message, true)
-  }
+  })
 }
 
 async function saveTranslations(translations) {
@@ -644,6 +790,41 @@ function createLabeled(label, element) {
   wrapper.appendChild(text)
   wrapper.appendChild(element)
   return wrapper
+}
+
+function updateQuestionCreateForm() {
+  const type = newQuestionType.value
+  questionnaireCard.querySelectorAll('.slider-only').forEach((node) => {
+    node.style.display = type === 'slider' ? '' : 'none'
+  })
+  questionnaireCard.querySelectorAll('.multi-only').forEach((node) => {
+    node.style.display = type === 'multi' ? '' : 'none'
+  })
+  questionnaireCard.querySelectorAll('.text-only').forEach((node) => {
+    node.style.display = type === 'text' ? '' : 'none'
+  })
+}
+
+async function runWithButtonFeedback(button, action) {
+  const originalText = button.textContent
+  button.disabled = true
+  button.classList.remove('success', 'error')
+  button.textContent = 'Speichern...'
+  try {
+    await action()
+    button.classList.add('success')
+    button.textContent = 'Gespeichert ✓'
+  } catch (error) {
+    button.classList.add('error')
+    button.textContent = 'Fehler'
+    setStatus(error.message, true)
+  } finally {
+    setTimeout(() => {
+      button.classList.remove('success', 'error')
+      button.textContent = originalText
+      button.disabled = false
+    }, 900)
+  }
 }
 
 function normalizePin(pin) {
