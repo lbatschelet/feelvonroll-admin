@@ -364,18 +364,8 @@ usersCard.innerHTML = `
     <h2>User</h2>
     <button id="reloadUsers" class="ghost">Neu laden</button>
   </div>
-  <div class="user-create">
-    <div class="question-row">
-      <label class="field">
-        <span>Name</span>
-        <input type="text" id="newUserName" placeholder="Name" />
-      </label>
-      <label class="field">
-        <span>Email</span>
-        <input type="email" id="newUserEmail" placeholder="name@domain.ch" />
-      </label>
-      <button type="button" id="addUser">User erstellen</button>
-    </div>
+  <div class="user-actions">
+    <button type="button" id="addUser">User erstellen</button>
   </div>
   <div class="table-wrap">
     <table>
@@ -395,6 +385,54 @@ usersCard.innerHTML = `
   <div class="reset-link" id="resetLinkBox"></div>
 `
 pages.appendChild(usersCard)
+
+const userModal = document.createElement('div')
+userModal.className = 'modal-backdrop'
+userModal.innerHTML = `
+  <div class="modal">
+    <div class="modal-header">
+      <h3>User erstellen</h3>
+      <button type="button" class="modal-close" aria-label="Schliessen">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="question-row">
+        <label class="field">
+          <span>Name</span>
+          <input type="text" id="modalUserName" placeholder="Name" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input type="email" id="modalUserEmail" placeholder="name@domain.ch" />
+        </label>
+      </div>
+      <div class="question-row">
+        <label class="field">
+          <span>Passwort setzen</span>
+          <select id="modalUserMode">
+            <option value="reset" selected>Reset-Link erstellen</option>
+            <option value="password">Passwort jetzt setzen</option>
+          </select>
+        </label>
+      </div>
+      <div class="question-row modal-password">
+        <label class="field">
+          <span>Passwort</span>
+          <input type="password" id="modalUserPassword" placeholder="Passwort" />
+        </label>
+        <label class="field">
+          <span>Passwort bestätigen</span>
+          <input type="password" id="modalUserPasswordConfirm" placeholder="Passwort bestätigen" />
+        </label>
+      </div>
+      <div class="reset-link" id="modalResetLink"></div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="ghost" id="modalCancel">Abbrechen</button>
+      <button type="button" id="modalCreateUser">User erstellen</button>
+    </div>
+  </div>
+`
+document.body.appendChild(userModal)
 
 const auditCard = document.createElement('section')
 auditCard.className = 'card audit-card'
@@ -491,11 +529,18 @@ const newQuestionAllowMultiple = questionnaireCard.querySelector('#newQuestionAl
 const newQuestionRows = questionnaireCard.querySelector('#newQuestionRows')
 const addQuestionButton = questionnaireCard.querySelector('#addQuestion')
 const reloadUsersButton = usersCard.querySelector('#reloadUsers')
-const newUserName = usersCard.querySelector('#newUserName')
-const newUserEmail = usersCard.querySelector('#newUserEmail')
 const addUserButton = usersCard.querySelector('#addUser')
 const usersBody = usersCard.querySelector('#usersBody')
 const resetLinkBox = usersCard.querySelector('#resetLinkBox')
+const modalCloseButton = userModal.querySelector('.modal-close')
+const modalCancelButton = userModal.querySelector('#modalCancel')
+const modalCreateUserButton = userModal.querySelector('#modalCreateUser')
+const modalUserName = userModal.querySelector('#modalUserName')
+const modalUserEmail = userModal.querySelector('#modalUserEmail')
+const modalUserMode = userModal.querySelector('#modalUserMode')
+const modalUserPassword = userModal.querySelector('#modalUserPassword')
+const modalUserPasswordConfirm = userModal.querySelector('#modalUserPasswordConfirm')
+const modalResetLink = userModal.querySelector('#modalResetLink')
 const reloadAuditButton = auditCard.querySelector('#reloadAudit')
 const auditLimitSelect = auditCard.querySelector('#auditLimit')
 const auditPrevButton = auditCard.querySelector('#auditPrev')
@@ -581,7 +626,11 @@ addLanguageButton.addEventListener('click', async () => {
 reloadQuestionnaireButton.addEventListener('click', () => loadQuestionnaire())
 saveQuestionnaireButton.addEventListener('click', () => saveQuestionnaire())
 reloadUsersButton.addEventListener('click', () => loadUsers())
-addUserButton.addEventListener('click', () => handleCreateUser())
+addUserButton.addEventListener('click', () => openUserModal())
+modalCloseButton.addEventListener('click', () => closeUserModal())
+modalCancelButton.addEventListener('click', () => closeUserModal())
+modalUserMode.addEventListener('change', () => updateUserModalMode())
+modalCreateUserButton.addEventListener('click', () => handleCreateUser())
 reloadAuditButton.addEventListener('click', () => loadAuditLogs())
 auditLimitSelect.addEventListener('change', (event) => {
   state.audit.limit = Number(event.target.value || 50)
@@ -1718,31 +1767,73 @@ async function handleBootstrapCreateUser() {
 }
 
 async function handleCreateUser() {
-  const name = newUserName.value.trim()
-  const email = newUserEmail.value.trim()
+  const name = modalUserName.value.trim()
+  const email = modalUserEmail.value.trim()
   if (!name || !email) {
     setStatus('Name und Email fehlen', true)
     return
   }
-  await runWithButtonFeedback(addUserButton, async () => {
-    const result = await createUser({ token: state.token, name, email })
-    newUserName.value = ''
-    newUserEmail.value = ''
-    state.lastResetLink = buildResetLink(result.reset_token)
-    openResetLink(state.lastResetLink)
-    renderResetLink()
+  const mode = modalUserMode.value
+  const password = modalUserPassword.value
+  const passwordConfirm = modalUserPasswordConfirm.value
+
+  if (mode === 'password') {
+    if (!password || password.length < 8) {
+      setStatus('Passwort muss mindestens 8 Zeichen haben', true)
+      return
+    }
+    if (password !== passwordConfirm) {
+      setStatus('Passwörter stimmen nicht überein', true)
+      return
+    }
+  }
+
+  await runWithButtonFeedback(modalCreateUserButton, async () => {
+    const result = await createUser({
+      token: state.token,
+      name,
+      email,
+      password: mode === 'password' ? password : '',
+    })
+
+    modalUserName.value = ''
+    modalUserEmail.value = ''
+    modalUserPassword.value = ''
+    modalUserPasswordConfirm.value = ''
+    modalResetLink.innerHTML = ''
+
+    if (mode === 'reset' && result.reset_token) {
+      state.lastResetLink = buildResetLink(result.reset_token)
+      openResetLink(state.lastResetLink)
+      renderResetLink()
+      renderModalResetLink(state.lastResetLink)
+    }
+
+    closeUserModal()
+
     if (state.bootstrapMode) {
       state.bootstrapMode = false
       state.loggedIn = false
       state.token = ''
       localStorage.removeItem('admin_jwt')
-      setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
+      setStatus(
+        mode === 'reset'
+          ? 'User erstellt. Reset-Link (24h) bereit'
+          : 'User erstellt. Passwort gesetzt',
+        false
+      )
       setAuthSection('set-password')
       applyVisibility()
       return
     }
+
     await loadUsers()
-    setStatus(`User erstellt. Reset-Link (24h) bereit`, false)
+    setStatus(
+      mode === 'reset'
+        ? 'User erstellt. Reset-Link (24h) bereit'
+        : 'User erstellt. Passwort gesetzt',
+      false
+    )
   })
 }
 
@@ -1978,4 +2069,43 @@ function openResetLink(link) {
   if (!popup) {
     setStatus('Popup blockiert. Bitte Reset-Link manuell öffnen.', true)
   }
+}
+
+function openUserModal() {
+  userModal.classList.add('is-visible')
+  updateUserModalMode()
+  modalUserName.focus()
+}
+
+function closeUserModal() {
+  userModal.classList.remove('is-visible')
+  modalResetLink.innerHTML = ''
+}
+
+function updateUserModalMode() {
+  const mode = modalUserMode.value
+  const passwordRow = userModal.querySelector('.modal-password')
+  passwordRow.style.display = mode === 'password' ? 'grid' : 'none'
+}
+
+function renderModalResetLink(link) {
+  if (!link) return
+  modalResetLink.innerHTML = `
+    <div class="reset-link-box">
+      <div class="muted">Reset-Link (24h)</div>
+      <div class="reset-link-row">
+        <input type="text" value="${link}" readonly />
+        <button type="button" class="ghost" id="copyModalResetLink">Kopieren</button>
+      </div>
+    </div>
+  `
+  const copyButton = modalResetLink.querySelector('#copyModalResetLink')
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(link)
+      setStatus('Reset-Link kopiert', false)
+    } catch (error) {
+      setStatus('Kopieren fehlgeschlagen', true)
+    }
+  })
 }

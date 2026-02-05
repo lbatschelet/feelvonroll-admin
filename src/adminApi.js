@@ -331,11 +331,11 @@ export async function fetchAuditLogs({ token, limit = 50, offset = 0 }) {
   return response.json()
 }
 
-export async function createUser({ token, name, email }) {
+export async function createUser({ token, name, email, password }) {
   const response = await fetch(`${API_BASE}/admin_users.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ action: 'create', name, email }),
+    body: JSON.stringify({ action: 'create', name, email, password }),
   })
   if (!response.ok) {
     const message = await parseError(response)
