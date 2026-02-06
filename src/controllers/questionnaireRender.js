@@ -60,15 +60,23 @@ export function createQuestionnaireRender({ state, views }) {
 
         const controls = document.createElement('div')
         controls.className = 'question-controls'
+        const toggles = document.createElement('div')
+        toggles.className = 'question-toggles'
         const requiredToggle = createCheckbox(Boolean(question.required))
         requiredToggle.dataset.field = 'required'
         const activeToggle = createCheckbox(Boolean(question.is_active))
         activeToggle.dataset.field = 'is_active'
-        const sortInput = createInput('number', question.sort ?? 0)
-        sortInput.dataset.field = 'sort'
-        controls.appendChild(createLabeled('Pflichtfeld', requiredToggle))
-        controls.appendChild(createLabeled('Aktiv', activeToggle))
-        controls.appendChild(createLabeled('Sort', sortInput))
+        const requiredLabel = document.createElement('label')
+        requiredLabel.className = 'checkbox-inline'
+        requiredLabel.appendChild(requiredToggle)
+        requiredLabel.appendChild(document.createTextNode('Pflichtfeld'))
+        const activeLabel = document.createElement('label')
+        activeLabel.className = 'checkbox-inline'
+        activeLabel.appendChild(activeToggle)
+        activeLabel.appendChild(document.createTextNode('Aktiv'))
+        toggles.appendChild(requiredLabel)
+        toggles.appendChild(activeLabel)
+        controls.appendChild(toggles)
         body.appendChild(controls)
 
         if (question.type === 'slider') {
@@ -144,57 +152,64 @@ export function createQuestionnaireRender({ state, views }) {
         })
         body.appendChild(translationsWrapper)
 
-        const optionsWrapper = document.createElement('div')
-        optionsWrapper.className = 'options-row'
-        const optionList = document.createElement('div')
-        optionList.className = 'option-list'
-        const options = state.options
-          .filter((option) => option.question_key === question.question_key)
-          .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
-        options.forEach((option) => {
-          const row = document.createElement('div')
-          row.className = 'option-row'
-          row.dataset.questionKey = question.question_key
-          row.dataset.optionKey = option.option_key
-          const optionKeyInput = createInput('text', option.option_key, true)
-          const optionSortInput = createInput('number', option.sort ?? 0)
-          optionSortInput.dataset.field = 'option-sort'
-          const optionActiveInput = createCheckbox(Boolean(option.is_active))
-          optionActiveInput.dataset.field = 'option-active'
-          const optionLabelInput = createInput('text', getTranslation(option.translation_key || ''))
-          optionLabelInput.dataset.field = 'option-label'
-          row.appendChild(createLabeled('Key', optionKeyInput))
-          row.appendChild(createLabeled('Sort', optionSortInput))
-          row.appendChild(createLabeled('Aktiv', optionActiveInput))
-          row.appendChild(createLabeled('Label', optionLabelInput))
+        if (question.type === 'multi') {
+          const optionsWrapper = document.createElement('div')
+          optionsWrapper.className = 'options-row'
+          const optionList = document.createElement('div')
+          optionList.className = 'option-list'
+          const options = state.options
+            .filter((option) => option.question_key === question.question_key)
+            .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
+          options.forEach((option) => {
+            const row = document.createElement('div')
+            row.className = 'option-row'
+            row.dataset.questionKey = question.question_key
+            row.dataset.optionKey = option.option_key
+            row.draggable = true
+            const dragHandle = document.createElement('div')
+            dragHandle.className = 'option-drag'
+            dragHandle.title = 'Ziehen zum Sortieren'
+            const optionKeyInput = createInput('text', option.option_key, true)
+            const optionSortInput = createInput('number', option.sort ?? 0)
+            optionSortInput.dataset.field = 'option-sort'
+            optionSortInput.style.display = 'none'
+            const optionActiveInput = createCheckbox(Boolean(option.is_active))
+            optionActiveInput.dataset.field = 'option-active'
+            const optionLabelInput = createInput('text', getTranslation(option.translation_key || ''))
+            optionLabelInput.dataset.field = 'option-label'
+            row.appendChild(dragHandle)
+            row.appendChild(createLabeled('Key', optionKeyInput))
+            row.appendChild(createLabeled('Aktiv', optionActiveInput))
+            row.appendChild(createLabeled('Label', optionLabelInput))
 
-          const saveOptionButton = createButton('Speichern')
-          saveOptionButton.dataset.action = 'option-save'
-          const deleteOptionButton = createButton('Löschen', 'danger')
-          deleteOptionButton.dataset.action = 'option-delete'
-          row.appendChild(saveOptionButton)
-          row.appendChild(deleteOptionButton)
-          optionList.appendChild(row)
-        })
-        optionsWrapper.appendChild(optionList)
-        body.appendChild(optionsWrapper)
+            const saveOptionButton = createButton('Speichern')
+            saveOptionButton.dataset.action = 'option-save'
+            const deleteOptionButton = createButton('Löschen', 'danger')
+            deleteOptionButton.dataset.action = 'option-delete'
+            row.appendChild(saveOptionButton)
+            row.appendChild(deleteOptionButton)
+            optionList.appendChild(row)
+          })
+          optionsWrapper.appendChild(optionList)
+          body.appendChild(optionsWrapper)
 
-        const addWrapper = document.createElement('div')
-        addWrapper.className = 'option-add'
-        addWrapper.dataset.questionKey = question.question_key
-        const addKeyInput = createInput('text', '')
-        addKeyInput.dataset.field = 'option-new-key'
-        const addSortInput = createInput('number', '0')
-        addSortInput.dataset.field = 'option-new-sort'
-        const addLabelInput = createInput('text', '')
-        addLabelInput.dataset.field = 'option-new-label'
-        const addButton = createButton('Option hinzufügen')
-        addButton.dataset.action = 'option-add'
-        addWrapper.appendChild(createLabeled('Key', addKeyInput))
-        addWrapper.appendChild(createLabeled('Sort', addSortInput))
-        addWrapper.appendChild(createLabeled('Label', addLabelInput))
-        addWrapper.appendChild(addButton)
-        body.appendChild(addWrapper)
+          const addWrapper = document.createElement('div')
+          addWrapper.className = 'option-add'
+          addWrapper.dataset.questionKey = question.question_key
+          const addKeyInput = createInput('text', '')
+          addKeyInput.dataset.field = 'option-new-key'
+          const addSortInput = createInput('number', '0')
+          addSortInput.dataset.field = 'option-new-sort'
+          addSortInput.style.display = 'none'
+          const addLabelInput = createInput('text', '')
+          addLabelInput.dataset.field = 'option-new-label'
+          const addButton = createButton('Option hinzufügen')
+          addButton.dataset.action = 'option-add'
+          addWrapper.appendChild(createLabeled('Key', addKeyInput))
+          addWrapper.appendChild(createLabeled('Label', addLabelInput))
+          addWrapper.appendChild(addButton)
+          body.appendChild(addWrapper)
+        }
 
         wrapper.appendChild(body)
         questionsBody.appendChild(wrapper)

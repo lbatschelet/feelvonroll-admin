@@ -21,6 +21,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
     render,
     renderDashboard,
   })
+  let draggingOption = null
 
   const loadQuestionnaire = async () => {
     shell.setStatus('Lade Fragebogen...', false)
@@ -136,7 +137,6 @@ export function createQuestionnaireController({ state, views, api, shell, render
       newQuestionType,
       newQuestionRequired,
       newQuestionActive,
-      newQuestionSort,
       newQuestionMin,
       newQuestionMax,
       newQuestionStep,
@@ -157,13 +157,11 @@ export function createQuestionnaireController({ state, views, api, shell, render
     const type = newQuestionType.value
     const required = newQuestionRequired.checked
     const isActive = newQuestionActive.checked
-    const sort = Number(newQuestionSort.value || 0)
     const added = actions.addQuestion({
       key,
       type,
       required,
       isActive,
-      sort,
       configValues: {
         min: newQuestionMin.value,
         max: newQuestionMax.value,
@@ -220,29 +218,73 @@ export function createQuestionnaireController({ state, views, api, shell, render
     })
 
     views.questionnaireView.questionsBody.addEventListener('dragstart', (event) => {
+      const optionRow = event.target.closest('.option-row')
+      if (optionRow) {
+        draggingOption = {
+          questionKey: optionRow.dataset.questionKey,
+          optionKey: optionRow.dataset.optionKey,
+        }
+        optionRow.classList.add('dragging')
+        return
+      }
       const wrapper = event.target.closest('.question-block')
       if (!wrapper) return
       state.draggingKey = wrapper.dataset.key
       wrapper.classList.add('dragging')
     })
     views.questionnaireView.questionsBody.addEventListener('dragend', (event) => {
+      const optionRow = event.target.closest('.option-row')
+      if (optionRow) {
+        optionRow.classList.remove('dragging')
+        draggingOption = null
+        return
+      }
       const wrapper = event.target.closest('.question-block')
       if (!wrapper) return
       wrapper.classList.remove('dragging')
       state.draggingKey = null
     })
     views.questionnaireView.questionsBody.addEventListener('dragover', (event) => {
+      const optionRow = event.target.closest('.option-row')
+      if (optionRow && draggingOption) {
+        if (optionRow.dataset.questionKey !== draggingOption.questionKey) return
+        event.preventDefault()
+        optionRow.classList.add('drag-over')
+        return
+      }
       const wrapper = event.target.closest('.question-block')
       if (!wrapper) return
       event.preventDefault()
       wrapper.classList.add('drag-over')
     })
     views.questionnaireView.questionsBody.addEventListener('dragleave', (event) => {
+      const optionRow = event.target.closest('.option-row')
+      if (optionRow) {
+        optionRow.classList.remove('drag-over')
+        return
+      }
       const wrapper = event.target.closest('.question-block')
       if (!wrapper) return
       wrapper.classList.remove('drag-over')
     })
     views.questionnaireView.questionsBody.addEventListener('drop', (event) => {
+      const optionRow = event.target.closest('.option-row')
+      if (optionRow && draggingOption) {
+        event.preventDefault()
+        optionRow.classList.remove('drag-over')
+        if (optionRow.dataset.questionKey !== draggingOption.questionKey) return
+        const list = optionRow.closest('.option-list')
+        if (!list) return
+        const dragSelector = `.option-row[data-option-key="${draggingOption.optionKey}"]`
+        const draggingEl = list.querySelector(dragSelector)
+        if (!draggingEl || draggingEl === optionRow) return
+        list.insertBefore(draggingEl, optionRow)
+        const orderedKeys = Array.from(list.querySelectorAll('.option-row')).map(
+          (row) => row.dataset.optionKey
+        )
+        actions.saveOptionOrder(draggingOption.questionKey, orderedKeys)
+        return
+      }
       const wrapper = event.target.closest('.question-block')
       if (!wrapper) return
       event.preventDefault()

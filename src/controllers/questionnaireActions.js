@@ -24,19 +24,17 @@ export function buildQuestionConfig({ type, values }) {
   return config
 }
 
-export function buildNewQuestion({ key, type, required, isActive, sort, config, existingQuestions }) {
+export function buildNewQuestion({ key, type, required, isActive, config, existingQuestions }) {
   const base = {
     question_key: key,
     type,
     required,
-    sort: Number(sort || 0),
+    sort: 0,
     is_active: isActive,
     config,
   }
-  if (!base.sort) {
-    const maxSort = Math.max(0, ...existingQuestions.map((question) => Number(question.sort || 0)))
-    base.sort = maxSort + 10
-  }
+  const maxSort = Math.max(0, ...existingQuestions.map((question) => Number(question.sort || 0)))
+  base.sort = maxSort + 1
   return base
 }
 
@@ -61,6 +59,32 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     shell.setStatus('Option gespeichert', false)
   }
 
+  const saveOptionOrder = async (questionKey, optionKeys) => {
+    const updates = optionKeys.map((option_key, index) => {
+      const option = state.options.find(
+        (item) => item.question_key === questionKey && item.option_key === option_key
+      )
+      return {
+        question_key: questionKey,
+        option_key,
+        sort: index + 1,
+        is_active: option ? Boolean(option.is_active) : true,
+        translation_key: option?.translation_key || `options.${questionKey}.${option_key}`,
+      }
+    })
+    for (const entry of updates) {
+      await api.upsertOption({ token: state.token, ...entry })
+    }
+    state.options = state.options.map((option) => {
+      if (option.question_key !== questionKey) return option
+      const index = optionKeys.indexOf(option.option_key)
+      if (index === -1) return option
+      return { ...option, sort: index + 1 }
+    })
+    render.renderQuestionsList()
+    shell.setStatus('Optionen sortiert', false)
+  }
+
   const saveTranslations = async (translations) => {
     const entries = Object.entries(translations)
     if (!entries.length) return
@@ -80,12 +104,12 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     const blocks = Array.from(questionsBody.querySelectorAll('.question-block'))
     const payloads = []
 
-    for (const block of blocks) {
+    for (const [index, block] of blocks.entries()) {
       const key = block.dataset.key
       const type = block.dataset.type
       const required = block.querySelector('[data-field="required"]')?.checked || false
       const isActive = block.querySelector('[data-field="is_active"]')?.checked || false
-      const sort = Number(block.querySelector('[data-field="sort"]')?.value || 0)
+      const sort = index + 1
       const translationsByLang = {}
 
       for (const language of activeLanguages) {
@@ -229,14 +253,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     })
   }
 
-  const addQuestion = ({
-    key,
-    type,
-    required,
-    isActive,
-    sort,
-    configValues,
-  }) => {
+  const addQuestion = ({ key, type, required, isActive, configValues }) => {
     const translationsByLang = collectNewQuestionTranslations(type)
     if (!translationsByLang) return false
 
@@ -246,7 +263,6 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
       type,
       required,
       isActive,
-      sort,
       config,
       existingQuestions: state.questions,
     })
@@ -261,7 +277,6 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
       newQuestionKey,
       newQuestionRequired,
       newQuestionActive,
-      newQuestionSort,
       newQuestionMin,
       newQuestionMax,
       newQuestionStep,
@@ -274,7 +289,6 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     newQuestionKey.value = ''
     newQuestionRequired.checked = false
     newQuestionActive.checked = true
-    newQuestionSort.value = '50'
     newQuestionMin.value = '0'
     newQuestionMax.value = '1'
     newQuestionStep.value = '0.01'
@@ -287,6 +301,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
 
   return {
     saveOption,
+    saveOptionOrder,
     saveTranslations,
     saveQuestionnaire,
     addQuestion,

@@ -419,6 +419,32 @@ button.error {
   padding: 0 12px 12px;
 }
 
+.question-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.question-toggles {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.checkbox-inline input[type='checkbox'] {
+  margin: 0;
+}
+
 .drag-handle {
   font-size: 1rem;
   color: #94a3b8;
@@ -551,6 +577,29 @@ button.error {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.option-row {
+  display: grid;
+  grid-template-columns: 24px repeat(3, minmax(140px, 1fr)) auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.option-drag {
+  color: #94a3b8;
+  cursor: grab;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.option-row.dragging {
+  opacity: 0.6;
+}
+
+.option-row.drag-over {
+  outline: 2px dashed #2563eb;
+  outline-offset: 2px;
 }
 
 .option-list h3 {

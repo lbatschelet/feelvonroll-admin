@@ -48,10 +48,6 @@ export function createQuestionnaireView() {
             <span>Aktiv</span>
             <input type="checkbox" id="newQuestionActive" checked />
           </label>
-          <label class="field">
-            <span>Sort</span>
-            <input type="number" id="newQuestionSort" value="50" />
-          </label>
         </div>
         <div class="question-row question-translations" id="newQuestionTranslations"></div>
         <div class="question-row slider-only">
@@ -110,7 +106,6 @@ export function createQuestionnaireView() {
     newQuestionType: questionnaireCard.querySelector('#newQuestionType'),
     newQuestionRequired: questionnaireCard.querySelector('#newQuestionRequired'),
     newQuestionActive: questionnaireCard.querySelector('#newQuestionActive'),
-    newQuestionSort: questionnaireCard.querySelector('#newQuestionSort'),
     newQuestionTranslations: questionnaireCard.querySelector('#newQuestionTranslations'),
     newQuestionMin: questionnaireCard.querySelector('#newQuestionMin'),
     newQuestionMax: questionnaireCard.querySelector('#newQuestionMax'),
