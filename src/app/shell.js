@@ -10,6 +10,8 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
   const setPage = (page) => {
     if (state.bootstrapMode && page !== 'users') {
       state.page = 'users'
+    } else if (!state.isAdmin && (page === 'users' || page === 'audit')) {
+      state.page = 'dashboard'
     } else {
       state.page = page
     }
@@ -35,9 +37,18 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
     if (header.nav) {
       header.nav.style.display = state.loggedIn ? 'flex' : 'none'
     }
+    if (header.userMenuButton) {
+      header.userMenuButton.style.display = state.loggedIn ? 'inline-flex' : 'none'
+    }
+    if (!state.loggedIn && header.userMenuPanel) {
+      header.userMenuPanel.classList.remove('is-open')
+    }
     header.navButtons.forEach((button) => {
       const isActive = button.dataset.page === state.page
       button.classList.toggle('active', isActive)
+      if (button.dataset.adminOnly) {
+        button.style.display = state.isAdmin ? 'inline-flex' : 'none'
+      }
     })
     const allPageElements = Object.values(registry).flat()
     allPageElements.forEach((element) => {
@@ -72,5 +83,10 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
     handlePageChange = next
   }
 
-  return { setPage, applyVisibility, setStatus, setAuthSection, setOnPageChange }
+  const setUserDisplayName = (name) => {
+    if (!header.userMenuButton) return
+    header.userMenuButton.textContent = name || 'Profil'
+  }
+
+  return { setPage, applyVisibility, setStatus, setAuthSection, setOnPageChange, setUserDisplayName }
 }

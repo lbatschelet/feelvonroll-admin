@@ -35,5 +35,7 @@ export function createInitialState() {
     lastResetLink: '',
     editingUserId: null,
     currentUserId: null,
+    currentUser: null,
+    isAdmin: false,
   }
 }

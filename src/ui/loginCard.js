@@ -46,8 +46,12 @@ export function createLoginCard() {
     </div>
     <div class="auth-section" data-section="bootstrap-user">
       <div class="form-row">
-        <label>Erster User (Name)</label>
-        <input type="text" id="bootstrapName" placeholder="Name" />
+        <label>Erster User (Vorname)</label>
+        <input type="text" id="bootstrapFirstName" placeholder="Vorname" />
+      </div>
+      <div class="form-row">
+        <label>Erster User (Nachname)</label>
+        <input type="text" id="bootstrapLastName" placeholder="Nachname" />
       </div>
       <div class="form-row">
         <label>Erster User (Email)</label>
@@ -71,7 +75,8 @@ export function createLoginCard() {
     setPasswordButton: loginCard.querySelector('#setPasswordButton'),
     tokenInput: loginCard.querySelector('#adminToken'),
     bootstrapButton: loginCard.querySelector('#bootstrapButton'),
-    bootstrapName: loginCard.querySelector('#bootstrapName'),
+    bootstrapFirstName: loginCard.querySelector('#bootstrapFirstName'),
+    bootstrapLastName: loginCard.querySelector('#bootstrapLastName'),
     bootstrapEmail: loginCard.querySelector('#bootstrapEmail'),
     bootstrapCreateUser: loginCard.querySelector('#bootstrapCreateUser'),
   }

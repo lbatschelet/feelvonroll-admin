@@ -7,59 +7,7 @@ import { getActiveLanguages } from '../services/languagesService'
 
 export function createQuestionnaireRender({ state, views }) {
   const questionnaireView = views.questionnaireView
-  const {
-    languageSelect,
-    questionsBody,
-    newQuestionTranslations,
-  } = questionnaireView
-  const { languageSelectAdmin, languagesBody } = views.languagesView
-
-  const renderLanguageSelectors = () => {
-    languageSelectAdmin.innerHTML = ''
-    state.languages.forEach((language) => {
-      const option = document.createElement('option')
-      option.value = language.lang
-      option.textContent = `${language.label} (${language.lang})`
-      languageSelectAdmin.appendChild(option)
-    })
-    languageSelectAdmin.value = state.selectedLanguage
-
-    languageSelect.innerHTML = ''
-    getActiveLanguages(state.languages).forEach((language) => {
-      const option = document.createElement('option')
-      option.value = language.lang
-      option.textContent = `${language.label} (${language.lang})`
-      languageSelect.appendChild(option)
-    })
-    languageSelect.value = state.selectedLanguage
-  }
-
-  const renderLanguagesTable = () => {
-    languagesBody.innerHTML = ''
-    if (!state.languages.length) {
-      const row = document.createElement('tr')
-      row.innerHTML = `<td colspan="4" class="empty">Keine Sprachen vorhanden</td>`
-      languagesBody.appendChild(row)
-      return
-    }
-
-    state.languages.forEach((language) => {
-      const row = document.createElement('tr')
-      row.innerHTML = `
-        <td>${language.lang}</td>
-        <td>${language.label}</td>
-        <td>
-          <input type="checkbox" data-action="lang-toggle" data-lang="${language.lang}" ${
-            language.enabled ? 'checked' : ''
-          } />
-        </td>
-        <td>
-          <button class="ghost" data-action="lang-delete" data-lang="${language.lang}">Löschen</button>
-        </td>
-      `
-      languagesBody.appendChild(row)
-    })
-  }
+  const { questionsBody, newQuestionTranslations } = questionnaireView
 
   const getTranslation = (key) => state.translations[key] || ''
 
@@ -79,7 +27,7 @@ export function createQuestionnaireRender({ state, views }) {
     state.questions
       .slice()
       .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
-      .forEach((question) => {
+      .forEach((question, index) => {
         const wrapper = document.createElement('details')
         wrapper.className = 'question-block'
         wrapper.dataset.key = question.question_key
@@ -89,10 +37,21 @@ export function createQuestionnaireRender({ state, views }) {
 
         const header = document.createElement('summary')
         header.className = 'question-header'
+        const labelKey = `questions.${question.question_key}.label`
+        const label = getTranslationFor(state.selectedLanguage, labelKey) || question.question_key
         header.innerHTML = `
-          <div class="drag-handle" title="Ziehen zum Sortieren">⠿</div>
-          <strong>${question.question_key}</strong>
-          <span class="muted">${question.type}</span>
+          <div class="question-header-main">
+            <div class="drag-handle" title="Ziehen zum Sortieren">⠿</div>
+            <div class="question-title">
+              <span class="question-index">${index + 1}.</span>
+              <span class="question-label">${label}</span>
+              <span class="muted">(${question.question_key})</span>
+            </div>
+          </div>
+          <div class="question-header-meta">
+            <span class="question-type">${question.type}</span>
+            <span class="question-header-chevron">▾</span>
+          </div>
         `
         wrapper.appendChild(header)
 
@@ -244,13 +203,13 @@ export function createQuestionnaireRender({ state, views }) {
 
   const renderCreateFormVisibility = () => {
     const type = questionnaireView.newQuestionType.value
-    questionnaireView.element.querySelectorAll('.slider-only').forEach((node) => {
+    questionnaireView.questionModal.querySelectorAll('.slider-only').forEach((node) => {
       node.style.display = type === 'slider' ? 'flex' : 'none'
     })
-    questionnaireView.element.querySelectorAll('.multi-only').forEach((node) => {
+    questionnaireView.questionModal.querySelectorAll('.multi-only').forEach((node) => {
       node.style.display = type === 'multi' ? 'flex' : 'none'
     })
-    questionnaireView.element.querySelectorAll('.text-only').forEach((node) => {
+    questionnaireView.questionModal.querySelectorAll('.text-only').forEach((node) => {
       node.style.display = type === 'text' ? 'flex' : 'none'
     })
     renderNewQuestionTranslations(type)
@@ -281,8 +240,6 @@ export function createQuestionnaireRender({ state, views }) {
   }
 
   return {
-    renderLanguageSelectors,
-    renderLanguagesTable,
     renderQuestionsList,
     renderCreateFormVisibility,
     renderNewQuestionTranslations,

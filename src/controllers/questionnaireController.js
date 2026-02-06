@@ -6,10 +6,12 @@ import { createQuestionnaireData } from './questionnaireData'
 import { createQuestionnaireRender } from './questionnaireRender'
 import { createQuestionnaireActions } from './questionnaireActions'
 import { reorderQuestions } from './questionnaireSort'
+import { createLanguagesRender } from './languagesRender'
 
 export function createQuestionnaireController({ state, views, api, shell, renderDashboard, renderPins }) {
   const data = createQuestionnaireData({ state, api })
   const render = createQuestionnaireRender({ state, views })
+  const languagesRender = createLanguagesRender({ state, views })
   const actions = createQuestionnaireActions({
     state,
     views,
@@ -24,9 +26,8 @@ export function createQuestionnaireController({ state, views, api, shell, render
     shell.setStatus('Lade Fragebogen...', false)
     try {
       await data.loadLanguages()
-      render.renderLanguageSelectors()
+      languagesRender.renderLanguageSelectors()
       await Promise.all([data.loadQuestions(), data.loadOptions(), data.loadTranslations()])
-      render.renderLanguagesTable()
       render.renderQuestionsList()
       render.renderCreateFormVisibility()
       renderDashboard()
@@ -42,34 +43,6 @@ export function createQuestionnaireController({ state, views, api, shell, render
     renderPins()
   }
 
-  const handleLanguageToggle = async (input) => {
-    const lang = input.dataset.lang
-    try {
-      await api.toggleLanguage({ token: state.token, lang, enabled: input.checked })
-      await data.loadLanguages()
-      render.renderLanguageSelectors()
-      await data.loadTranslations()
-      render.renderLanguagesTable()
-      render.renderCreateFormVisibility()
-      render.renderQuestionsList()
-    } catch (error) {
-      shell.setStatus(error.message, true)
-    }
-  }
-
-  const handleLanguageDelete = async (button) => {
-    const lang = button.dataset.lang
-    const confirmed = window.confirm(`Sprache "${lang}" löschen?`)
-    if (!confirmed) return
-    try {
-      await api.deleteLanguage({ token: state.token, lang })
-      await data.loadLanguages()
-      render.renderLanguageSelectors()
-      render.renderLanguagesTable()
-    } catch (error) {
-      shell.setStatus(error.message, true)
-    }
-  }
 
   const handleOptionSave = async (button) => {
     const row = button.closest('.option-row')
@@ -148,25 +121,13 @@ export function createQuestionnaireController({ state, views, api, shell, render
     }
   }
 
-  const handleAddLanguage = async () => {
-    const lang = views.languagesView.languageCode.value.trim()
-    const label = views.languagesView.languageLabel.value.trim()
-    if (!lang || !label) {
-      shell.setStatus('Code und Label fehlen', true)
-      return
-    }
-    try {
-      await api.upsertLanguage({ token: state.token, lang, label })
-      views.languagesView.languageCode.value = ''
-      views.languagesView.languageLabel.value = ''
-      await data.loadLanguages()
-      render.renderLanguageSelectors()
-      await data.loadTranslations()
-      render.renderQuestionsList()
-      shell.setStatus('Sprache gespeichert', false)
-    } catch (error) {
-      shell.setStatus(error.message, true)
-    }
+  const openQuestionModal = () => {
+    views.questionnaireView.questionModal.classList.add('is-visible')
+    views.questionnaireView.newQuestionKey.focus()
+  }
+
+  const closeQuestionModal = () => {
+    views.questionnaireView.questionModal.classList.remove('is-visible')
   }
 
   const handleAddQuestion = () => {
@@ -215,6 +176,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
     })
     if (!added) return
     actions.resetNewQuestionForm()
+    closeQuestionModal()
     render.renderQuestionsList()
   }
 
@@ -223,31 +185,25 @@ export function createQuestionnaireController({ state, views, api, shell, render
       state.selectedLanguage = event.target.value
       loadTranslations()
     })
-    views.languagesView.addLanguageButton.addEventListener('click', () => handleAddLanguage())
     views.questionnaireView.reloadQuestionnaireButton.addEventListener('click', () =>
       loadQuestionnaire()
     )
     views.questionnaireView.saveQuestionnaireButton.addEventListener('click', () =>
       actions.saveQuestionnaire()
     )
+    views.questionnaireView.openQuestionModalButton.addEventListener('click', () =>
+      openQuestionModal()
+    )
+    views.questionnaireView.closeQuestionModalButton.addEventListener('click', () =>
+      closeQuestionModal()
+    )
+    views.questionnaireView.cancelQuestionModalButton.addEventListener('click', () =>
+      closeQuestionModal()
+    )
     views.questionnaireView.newQuestionType.addEventListener('change', () =>
       render.renderCreateFormVisibility()
     )
     views.questionnaireView.addQuestionButton.addEventListener('click', () => handleAddQuestion())
-
-    views.languagesView.languagesBody.addEventListener('change', (event) => {
-      const target = event.target
-      if (target?.dataset?.action === 'lang-toggle') {
-        handleLanguageToggle(target)
-      }
-    })
-    views.languagesView.languagesBody.addEventListener('click', (event) => {
-      const button = event.target.closest('button[data-action]')
-      if (!button) return
-      if (button.dataset.action === 'lang-delete') {
-        handleLanguageDelete(button)
-      }
-    })
 
     views.questionnaireView.questionsBody.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-action]')

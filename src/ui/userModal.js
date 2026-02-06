@@ -14,8 +14,12 @@ export function createUserModal() {
       <div class="modal-body">
         <div class="question-row">
           <label class="field">
-            <span>Name</span>
-            <input type="text" id="modalUserName" placeholder="Name" autocomplete="name" />
+            <span>Vorname</span>
+            <input type="text" id="modalUserFirstName" placeholder="Vorname" autocomplete="given-name" />
+          </label>
+          <label class="field">
+            <span>Nachname</span>
+            <input type="text" id="modalUserLastName" placeholder="Nachname" autocomplete="family-name" />
           </label>
         </div>
         <div class="question-row">
@@ -50,6 +54,10 @@ export function createUserModal() {
           </label>
         </div>
         <p class="modal-hint">Passwort leer lassen, um einen Reset-Link zu erstellen.</p>
+        <label class="field checkbox-field">
+          <input type="checkbox" id="modalUserIsAdmin" />
+          <span>Admin</span>
+        </label>
         <div class="reset-link" id="modalResetLink"></div>
       </div>
       <div class="modal-actions">
@@ -65,8 +73,10 @@ export function createUserModal() {
     modalCancelButton: userModal.querySelector('#modalCancel'),
     modalCreateUserButton: userModal.querySelector('#modalCreateUser'),
     modalTitle: userModal.querySelector('#modalTitle'),
-    modalUserName: userModal.querySelector('#modalUserName'),
+    modalUserFirstName: userModal.querySelector('#modalUserFirstName'),
+    modalUserLastName: userModal.querySelector('#modalUserLastName'),
     modalUserEmail: userModal.querySelector('#modalUserEmail'),
+    modalUserIsAdmin: userModal.querySelector('#modalUserIsAdmin'),
     modalUserPassword: userModal.querySelector('#modalUserPassword'),
     modalUserPasswordConfirm: userModal.querySelector('#modalUserPasswordConfirm'),
     modalResetLink: userModal.querySelector('#modalResetLink'),

@@ -18,8 +18,10 @@ export function createUsersView() {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Name</th>
+            <th>Vorname</th>
+            <th>Nachname</th>
             <th>Email</th>
+            <th>Rolle</th>
             <th>Passwort</th>
             <th>Letzter Login</th>
             <th>Aktion</th>

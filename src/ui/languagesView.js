@@ -10,7 +10,6 @@ export function createLanguagesView() {
       <h2>Sprachen</h2>
     </div>
     <div class="language-tools">
-      <select id="languageSelectAdmin"></select>
       <input type="text" id="languageCode" placeholder="Code (z.B. de)" />
       <input type="text" id="languageLabel" placeholder="Label (z.B. Deutsch)" />
       <button id="addLanguage">Hinzufügen</button>
@@ -32,7 +31,6 @@ export function createLanguagesView() {
 
   return {
     element: languagesCard,
-    languageSelectAdmin: languagesCard.querySelector('#languageSelectAdmin'),
     languageCode: languagesCard.querySelector('#languageCode'),
     languageLabel: languagesCard.querySelector('#languageLabel'),
     addLanguageButton: languagesCard.querySelector('#addLanguage'),

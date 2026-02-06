@@ -6,8 +6,15 @@ import { runWithButtonFeedback } from '../../utils/buttonFeedback'
 import { buildResetLink, copyResetLink } from '../../utils/resetLink'
 
 export function createUsersActions({ state, views, api, shell, loader, renderer, modal, onLogout }) {
-  const { modalUserName, modalUserEmail, modalUserPassword, modalUserPasswordConfirm, modalCreateUserButton } =
-    views.userModal
+  const {
+    modalUserFirstName,
+    modalUserLastName,
+    modalUserEmail,
+    modalUserPassword,
+    modalUserPasswordConfirm,
+    modalUserIsAdmin,
+    modalCreateUserButton,
+  } = views.userModal
 
   const handleReset = async (button) => {
     const id = Number(button.dataset.id)
@@ -49,10 +56,12 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
   }
 
   const handleCreateOrUpdate = async () => {
-    const name = modalUserName.value.trim()
+    const first_name = modalUserFirstName.value.trim()
+    const last_name = modalUserLastName.value.trim()
     const email = modalUserEmail.value.trim()
-    if (!name || !email) {
-      shell.setStatus('Name und Email fehlen', true)
+    const is_admin = modalUserIsAdmin.checked
+    if (!first_name || !email) {
+      shell.setStatus('Vorname und Email fehlen', true)
       return
     }
     const password = modalUserPassword.value
@@ -62,7 +71,14 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
     if (state.editingUserId) {
       try {
         await runWithButtonFeedback(modalCreateUserButton, async () => {
-          await api.updateUser({ token: state.token, id: state.editingUserId, name, email })
+          await api.updateUser({
+            token: state.token,
+            id: state.editingUserId,
+            first_name,
+            last_name,
+            email,
+            is_admin,
+          })
           modal.closeUserModal()
           await loader.loadUsers()
           renderer.renderUsers()
@@ -89,15 +105,19 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
       await runWithButtonFeedback(modalCreateUserButton, async () => {
         const result = await api.createUser({
           token: state.token,
-          name,
+          first_name,
+          last_name,
           email,
           password: useReset ? '' : password,
+          is_admin,
         })
 
-        modalUserName.value = ''
+        modalUserFirstName.value = ''
+        modalUserLastName.value = ''
         modalUserEmail.value = ''
         modalUserPassword.value = ''
         modalUserPasswordConfirm.value = ''
+        modalUserIsAdmin.checked = false
         modal.renderModalResetLink('')
 
         if (useReset && result.reset_token) {

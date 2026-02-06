@@ -8,10 +8,12 @@ export function createUserModalController({ state, views }) {
   const {
     modalTitle,
     modalCreateUserButton,
-    modalUserName,
+    modalUserFirstName,
+    modalUserLastName,
     modalUserEmail,
     modalUserPassword,
     modalUserPasswordConfirm,
+    modalUserIsAdmin,
     modalResetLink,
   } = views.userModal
 
@@ -19,10 +21,12 @@ export function createUserModalController({ state, views }) {
     state.editingUserId = null
     modalTitle.textContent = 'User erstellen'
     modalCreateUserButton.textContent = 'User erstellen'
-    modalUserName.value = ''
+    modalUserFirstName.value = ''
+    modalUserLastName.value = ''
     modalUserEmail.value = ''
     modalUserPassword.value = ''
     modalUserPasswordConfirm.value = ''
+    modalUserIsAdmin.checked = false
     modalResetLink.innerHTML = ''
     views.userModal.element.classList.add('is-visible')
   }
@@ -31,10 +35,12 @@ export function createUserModalController({ state, views }) {
     state.editingUserId = Number(user.id)
     modalTitle.textContent = 'User bearbeiten'
     modalCreateUserButton.textContent = 'Speichern'
-    modalUserName.value = user.name || ''
+    modalUserFirstName.value = user.first_name || ''
+    modalUserLastName.value = user.last_name || ''
     modalUserEmail.value = user.email || ''
     modalUserPassword.value = ''
     modalUserPasswordConfirm.value = ''
+    modalUserIsAdmin.checked = Boolean(user.is_admin)
     modalResetLink.innerHTML = ''
     views.userModal.element.classList.add('is-visible')
   }

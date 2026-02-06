@@ -50,5 +50,23 @@ export function createPinsActions({ state, views, api, shell, render }) {
     }
   }
 
-  return { bulkUpdateApproval, bulkDelete }
+  const exportCsv = async () => {
+    shell.setStatus('Exportiere CSV...', false)
+    try {
+      const { blob, filename } = await api.exportPinsCsv({ token: state.token })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename || 'pins.csv'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      shell.setStatus('CSV exportiert', false)
+    } catch (error) {
+      shell.setStatus(error.message, true)
+    }
+  }
+
+  return { bulkUpdateApproval, bulkDelete, exportCsv }
 }

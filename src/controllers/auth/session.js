@@ -26,13 +26,18 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
       const result = await api.loginUser({ email, password })
       state.token = result.token
       state.currentUserId = result.user?.id || null
+      state.currentUser = result.user || null
+      state.isAdmin = Boolean(result.user?.is_admin)
+      shell.setUserDisplayName(result.user?.first_name || 'Profil')
       state.bootstrapMode = false
       localStorage.setItem('admin_jwt', state.token)
       state.loggedIn = true
       await loaders.loadPins()
       await loaders.loadQuestionnaire()
-      await loaders.loadUsers()
-      await loaders.loadAuditLogs()
+      if (state.isAdmin) {
+        await loaders.loadUsers()
+        await loaders.loadAuditLogs()
+      }
       shell.setPage('dashboard')
       tokenRefresh.startTokenRefresh()
     } catch (error) {
@@ -47,6 +52,9 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
     state.users = []
     state.lastResetLink = ''
     state.currentUserId = null
+    state.currentUser = null
+    state.isAdmin = false
+    shell.setUserDisplayName('Profil')
     localStorage.removeItem('admin_jwt')
     tokenRefresh.stopTokenRefresh()
     shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
@@ -79,11 +87,20 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
 
     if (state.token) {
       try {
+        if (api.fetchSelf) {
+          const self = await api.fetchSelf({ token: state.token })
+          state.currentUserId = self?.id || null
+          state.currentUser = self || null
+          state.isAdmin = Boolean(self?.is_admin)
+          shell.setUserDisplayName(self?.first_name || 'Profil')
+        }
         await loaders.loadPins()
         state.loggedIn = true
         await loaders.loadQuestionnaire()
-        await loaders.loadUsers()
-        await loaders.loadAuditLogs()
+        if (state.isAdmin) {
+          await loaders.loadUsers()
+          await loaders.loadAuditLogs()
+        }
         shell.setPage('dashboard')
         tokenRefresh.startTokenRefresh()
         return

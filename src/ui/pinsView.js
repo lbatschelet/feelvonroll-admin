@@ -27,6 +27,7 @@ export function createPinsView() {
         <option value="100">100 pro Seite</option>
       </select>
       <button id="reloadPins">Pins laden</button>
+      <button id="exportPinsCsv" class="ghost">CSV export</button>
     </div>
     <div class="pagination">
       <button id="prevPage" class="ghost">Zurück</button>
@@ -72,6 +73,7 @@ export function createPinsView() {
     toolsCard,
     tableCard,
     reloadButton: toolsCard.querySelector('#reloadPins'),
+    exportCsvButton: toolsCard.querySelector('#exportPinsCsv'),
     pageSizeSelect: toolsCard.querySelector('#pageSizeSelect'),
     prevPageButton: toolsCard.querySelector('#prevPage'),
     nextPageButton: toolsCard.querySelector('#nextPage'),

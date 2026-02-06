@@ -30,6 +30,7 @@ export function createPinsController({ state, views, api, shell, renderDashboard
   const bindEvents = () => {
     const {
       reloadButton,
+      exportCsvButton,
       pageSizeSelect,
       prevPageButton,
       nextPageButton,
@@ -45,6 +46,7 @@ export function createPinsController({ state, views, api, shell, renderDashboard
     } = views.pinsView
 
     reloadButton.addEventListener('click', () => loadPins())
+    exportCsvButton.addEventListener('click', () => actions.exportCsv())
     searchInput.addEventListener('input', (event) => {
       state.query = event.target.value.toLowerCase()
       state.pageIndex = 1

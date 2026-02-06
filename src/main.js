@@ -14,6 +14,7 @@ import { createQuestionnaireView } from './ui/questionnaireView'
 import { createUsersView } from './ui/usersView'
 import { createAuditView } from './ui/auditView'
 import { createUserModal } from './ui/userModal'
+import { createProfileModal } from './ui/profileModal'
 import { initApp } from './app/app'
 
 const app = document.querySelector('#app')
@@ -49,6 +50,9 @@ pages.appendChild(usersView.element)
 const userModal = createUserModal()
 document.body.appendChild(userModal.element)
 
+const profileModal = createProfileModal()
+document.body.appendChild(profileModal.element)
+
 const auditView = createAuditView()
 pages.appendChild(auditView.element)
 
@@ -64,6 +68,7 @@ const views = {
   usersView,
   auditView,
   userModal,
+  profileModal,
   status,
   pages,
 }

@@ -31,17 +31,20 @@ export function createUsersRenderer({ state, views, shell }) {
   const renderUsers = () => {
     usersBody.innerHTML = ''
     if (!state.users.length) {
-      usersBody.innerHTML = '<tr><td colspan="6" class="empty">Keine User vorhanden</td></tr>'
+      usersBody.innerHTML = '<tr><td colspan="8" class="empty">Keine User vorhanden</td></tr>'
       renderResetLink()
       return
     }
     state.users.forEach((user) => {
       const row = document.createElement('tr')
       const status = Number(user.must_set_password) === 1 ? 'Reset nötig' : 'Aktiv'
+      const role = Number(user.is_admin) === 1 ? 'Admin' : 'User'
       row.innerHTML = `
         <td>${user.id}</td>
-        <td>${escapeHtml(user.name || '')}</td>
+        <td>${escapeHtml(user.first_name || '')}</td>
+        <td>${escapeHtml(user.last_name || '')}</td>
         <td>${escapeHtml(user.email || '')}</td>
+        <td>${role}</td>
         <td>${status}</td>
         <td>${user.last_login_at ? formatDate(user.last_login_at) : '-'}</td>
         <td>

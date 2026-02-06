@@ -6,7 +6,8 @@ import { runWithButtonFeedback } from '../../utils/buttonFeedback'
 import { buildResetLink, copyResetLink } from '../../utils/resetLink'
 
 export function createBootstrapFlow({ state, api, shell, views }) {
-  const { tokenInput, bootstrapName, bootstrapEmail, bootstrapCreateUser } = views.loginCard
+  const { tokenInput, bootstrapFirstName, bootstrapLastName, bootstrapEmail, bootstrapCreateUser } =
+    views.loginCard
 
   const handleBootstrapLogin = async () => {
     const adminToken = tokenInput.value.trim()
@@ -28,16 +29,18 @@ export function createBootstrapFlow({ state, api, shell, views }) {
   }
 
   const handleBootstrapCreateUser = async () => {
-    const name = bootstrapName.value.trim()
+    const first_name = bootstrapFirstName.value.trim()
+    const last_name = bootstrapLastName.value.trim()
     const email = bootstrapEmail.value.trim()
-    if (!name || !email) {
-      shell.setStatus('Name und Email fehlen', true)
+    if (!first_name || !email) {
+      shell.setStatus('Vorname und Email fehlen', true)
       return
     }
     try {
       await runWithButtonFeedback(bootstrapCreateUser, async () => {
-        const result = await api.createUser({ token: state.token, name, email })
-        bootstrapName.value = ''
+        const result = await api.createUser({ token: state.token, first_name, last_name, email, is_admin: true })
+        bootstrapFirstName.value = ''
+        bootstrapLastName.value = ''
         bootstrapEmail.value = ''
         state.lastResetLink = buildResetLink(result.reset_token)
         await copyResetLink(state.lastResetLink)

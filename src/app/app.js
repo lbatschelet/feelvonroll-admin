@@ -7,15 +7,18 @@ import * as api from '../adminApi'
 import { createAuthController } from '../controllers/authController'
 import { createPinsController } from '../controllers/pinsController'
 import { createQuestionnaireController } from '../controllers/questionnaireController'
+import { createLanguagesController } from '../controllers/languagesController'
 import { createUsersController } from '../controllers/usersController'
 import { createAuditController } from '../controllers/auditController'
 import { createDashboardController } from '../controllers/dashboardController'
+import { createProfileController } from '../controllers/profileController'
 
 export function initApp({ state, views }) {
   const pageRegistry = {
     dashboard: [views.dashboard.element],
     pins: [views.pinsView.toolsCard, views.pinsView.tableCard],
-    questionnaire: [views.languagesView.element, views.questionnaireView.element],
+    questionnaire: [views.questionnaireView.element],
+    languages: [views.languagesView.element],
     users: [views.usersView.element],
     audit: [views.auditView.element],
   }
@@ -26,11 +29,13 @@ export function initApp({ state, views }) {
     loginUser: api.loginUser,
     setPassword: api.setPassword,
     refreshToken: api.refreshToken,
+    fetchSelf: api.fetchSelf,
   }
   const pinsApi = {
     fetchAdminPins: api.fetchAdminPins,
     updatePinApprovalBulk: api.updatePinApprovalBulk,
     deletePins: api.deletePins,
+    exportPinsCsv: api.exportPinsCsv,
   }
   const questionnaireApi = {
     fetchLanguages: api.fetchLanguages,
@@ -41,6 +46,10 @@ export function initApp({ state, views }) {
     upsertTranslation: api.upsertTranslation,
     upsertOption: api.upsertOption,
     deleteOption: api.deleteOption,
+  }
+  const languagesApi = {
+    fetchLanguages: api.fetchLanguages,
+    upsertLanguage: api.upsertLanguage,
     toggleLanguage: api.toggleLanguage,
     deleteLanguage: api.deleteLanguage,
   }
@@ -48,6 +57,7 @@ export function initApp({ state, views }) {
     fetchUsers: api.fetchUsers,
     createUser: api.createUser,
     updateUser: api.updateUser,
+    updateSelf: api.updateSelf,
     deleteUser: api.deleteUser,
     resetUserPassword: api.resetUserPassword,
   }
@@ -55,7 +65,21 @@ export function initApp({ state, views }) {
 
   const dashboardController = createDashboardController({ state, views })
   const shell = createShell({ state, views, pageRegistry })
-  const authController = createAuthController({ state, views, api: authApi, shell })
+  let profileController = null
+  const authController = createAuthController({
+    state,
+    views,
+    api: authApi,
+    shell,
+    onOpenProfile: () => profileController?.openProfileModal(),
+  })
+  profileController = createProfileController({
+    state,
+    views,
+    api: usersApi,
+    shell,
+    onLogout: authController.handleLogout,
+  })
   const pinsController = createPinsController({
     state,
     views,
@@ -71,6 +95,13 @@ export function initApp({ state, views }) {
     renderDashboard: dashboardController.renderDashboard,
     renderPins: pinsController.renderPins,
   })
+  const languagesController = createLanguagesController({
+    state,
+    views,
+    api: languagesApi,
+    shell,
+    onLanguagesChanged: questionnaireController.loadQuestionnaire,
+  })
   const usersController = createUsersController({
     state,
     views,
@@ -84,6 +115,7 @@ export function initApp({ state, views }) {
     dashboard: dashboardController.renderDashboard,
     users: usersController.renderUsers,
     audit: auditController.loadAuditLogs,
+    languages: languagesController.loadLanguages,
   }
   shell.setOnPageChange((page) => {
     const handler = pageHandlers[page]
@@ -100,8 +132,10 @@ export function initApp({ state, views }) {
   })
 
   authController.bindEvents()
+  profileController.bindEvents()
   pinsController.bindEvents()
   questionnaireController.bindEvents()
+  languagesController.bindEvents()
   usersController.bindEvents()
   auditController.bindEvents()
 
