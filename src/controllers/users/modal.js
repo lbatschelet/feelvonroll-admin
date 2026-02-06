@@ -19,8 +19,8 @@ export function createUserModalController({ state, views }) {
 
   const openUserModal = () => {
     state.editingUserId = null
-    modalTitle.textContent = 'User erstellen'
-    modalCreateUserButton.textContent = 'User erstellen'
+    modalTitle.textContent = 'Create user'
+    modalCreateUserButton.textContent = 'Create user'
     modalUserFirstName.value = ''
     modalUserLastName.value = ''
     modalUserEmail.value = ''
@@ -33,8 +33,8 @@ export function createUserModalController({ state, views }) {
 
   const openUserModalForEdit = (user) => {
     state.editingUserId = Number(user.id)
-    modalTitle.textContent = 'User bearbeiten'
-    modalCreateUserButton.textContent = 'Speichern'
+    modalTitle.textContent = 'Edit user'
+    modalCreateUserButton.textContent = 'Save'
     modalUserFirstName.value = user.first_name || ''
     modalUserLastName.value = user.last_name || ''
     modalUserEmail.value = user.email || ''
@@ -56,10 +56,10 @@ export function createUserModalController({ state, views }) {
     }
     modalResetLink.innerHTML = `
       <div class="reset-link-box">
-        <div class="muted">Reset-Link (24h)</div>
+        <div class="muted">Reset link (24h)</div>
         <div class="reset-link-row">
           <input type="text" value="${link}" readonly />
-          <button id="copyModalResetLink" class="ghost">Kopieren</button>
+          <button id="copyModalResetLink" class="ghost">Copy</button>
         </div>
       </div>
     `

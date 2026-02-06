@@ -14,5 +14,5 @@ export function getAuditRange({ offset, limit, total }) {
 export function formatAuditInfo({ offset, limit, total }) {
   const { start, end } = getAuditRange({ offset, limit, total })
   if (!total) return '0'
-  return `${start}-${end} von ${total}`
+  return `${start}-${end} of ${total}`
 }

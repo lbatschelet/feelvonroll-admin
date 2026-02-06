@@ -11,7 +11,7 @@ export function createAuditRenderer({ state, views }) {
   const renderAuditLogs = () => {
     auditBody.innerHTML = ''
     if (!state.audit.items.length) {
-      auditBody.innerHTML = '<tr><td colspan="5" class="empty">Keine Einträge</td></tr>'
+      auditBody.innerHTML = '<tr><td colspan="5" class="empty">No entries</td></tr>'
       auditInfo.textContent = '0'
       auditPrevButton.disabled = true
       auditNextButton.disabled = true

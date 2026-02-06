@@ -7,12 +7,12 @@ export function createLanguagesView() {
   languagesCard.className = 'card languages-card'
   languagesCard.innerHTML = `
     <div class="card-header">
-      <h2>Sprachen</h2>
+      <h2>Languages</h2>
     </div>
     <div class="language-tools">
-      <input type="text" id="languageCode" placeholder="Code (z.B. de)" />
-      <input type="text" id="languageLabel" placeholder="Label (z.B. Deutsch)" />
-      <button id="addLanguage">Hinzufügen</button>
+      <input type="text" id="languageCode" placeholder="Code (e.g. en)" title="Short language code" />
+      <input type="text" id="languageLabel" placeholder="Label (e.g. English)" title="Language name" />
+      <button id="addLanguage">Add language</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -20,8 +20,8 @@ export function createLanguagesView() {
           <tr>
             <th>Code</th>
             <th>Label</th>
-            <th>Aktiv</th>
-            <th>Aktion</th>
+            <th>Active</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="languagesBody"></tbody>

@@ -41,19 +41,19 @@ export function createProfileController({ state, views, api, shell, onLogout }) 
     const new_password_confirm = newPasswordConfirmInput.value
 
     if (!first_name || !email) {
-      shell.setStatus('Vorname und Email fehlen', true)
+      shell.setStatus('First name and email are required', true)
       return
     }
     if (!current_password) {
-      shell.setStatus('Aktuelles Passwort fehlt', true)
+      shell.setStatus('Current password is required', true)
       return
     }
     if ((new_password || new_password_confirm) && new_password !== new_password_confirm) {
-      shell.setStatus('Neue Passwörter stimmen nicht überein', true)
+      shell.setStatus('New passwords do not match', true)
       return
     }
     if (new_password && new_password.length < 8) {
-      shell.setStatus('Neues Passwort muss mindestens 8 Zeichen haben', true)
+      shell.setStatus('New password must be at least 8 characters', true)
       return
     }
 
@@ -77,11 +77,11 @@ export function createProfileController({ state, views, api, shell, onLogout }) 
         shell.setUserDisplayName(`${first_name}`)
         closeProfileModal()
         if (new_password && onLogout) {
-          shell.setStatus('Passwort geändert. Bitte neu anmelden.', false)
+          shell.setStatus('Password updated. Please log in again.', false)
           onLogout()
           return
         }
-        shell.setStatus('Profil gespeichert', false)
+        shell.setStatus('Profile saved', false)
       })
     } catch (error) {
       shell.setStatus(error.message, true)

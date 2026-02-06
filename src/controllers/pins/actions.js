@@ -13,10 +13,10 @@ export function createPinsActions({ state, views, api, shell, render }) {
   const bulkUpdateApproval = async (approved) => {
     const ids = getSelectedIds()
     if (!ids.length) {
-      shell.setStatus('Keine Pins ausgewählt', true)
+      shell.setStatus('No pins selected', true)
       return
     }
-    shell.setStatus('Speichere...', false)
+    shell.setStatus('Saving...', false)
     try {
       await api.updatePinApprovalBulk({ token: state.token, ids, approved })
       state.pins.forEach((pin) => {
@@ -25,7 +25,7 @@ export function createPinsActions({ state, views, api, shell, render }) {
         }
       })
       render.renderPins()
-      shell.setStatus(`Aktualisiert (${ids.length})`, false)
+      shell.setStatus(`Updated (${ids.length})`, false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -34,24 +34,24 @@ export function createPinsActions({ state, views, api, shell, render }) {
   const bulkDelete = async () => {
     const ids = getSelectedIds()
     if (!ids.length) {
-      shell.setStatus('Keine Pins ausgewählt', true)
+      shell.setStatus('No pins selected', true)
       return
     }
-    const confirmed = window.confirm(`Pins wirklich löschen? (${ids.length})`)
+    const confirmed = window.confirm(`Delete selected pins? (${ids.length})`)
     if (!confirmed) return
-    shell.setStatus('Lösche...', false)
+    shell.setStatus('Deleting...', false)
     try {
       await api.deletePins({ token: state.token, ids })
       state.pins = state.pins.filter((pin) => !ids.includes(pin.id))
       render.renderPins()
-      shell.setStatus(`Gelöscht (${ids.length})`, false)
+      shell.setStatus(`Deleted (${ids.length})`, false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
   }
 
   const exportCsv = async () => {
-    shell.setStatus('Exportiere CSV...', false)
+    shell.setStatus('Exporting CSV...', false)
     try {
       const { blob, filename } = await api.exportPinsCsv({ token: state.token })
       const url = window.URL.createObjectURL(blob)
@@ -62,7 +62,7 @@ export function createPinsActions({ state, views, api, shell, render }) {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-      shell.setStatus('CSV exportiert', false)
+      shell.setStatus('CSV exported', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }

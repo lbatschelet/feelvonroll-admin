@@ -15,10 +15,10 @@ export function createUsersRenderer({ state, views, shell }) {
     }
     resetLinkBox.innerHTML = `
       <div class="reset-link-box">
-        <div class="muted">Letzter Reset-Link (24h)</div>
+        <div class="muted">Latest reset link (24h)</div>
         <div class="reset-link-row">
           <input type="text" value="${state.lastResetLink}" readonly />
-          <button id="copyResetLink" class="ghost">Kopieren</button>
+          <button id="copyResetLink" class="ghost" title="Copy reset link to clipboard">Copy</button>
         </div>
       </div>
     `
@@ -31,13 +31,13 @@ export function createUsersRenderer({ state, views, shell }) {
   const renderUsers = () => {
     usersBody.innerHTML = ''
     if (!state.users.length) {
-      usersBody.innerHTML = '<tr><td colspan="8" class="empty">Keine User vorhanden</td></tr>'
+      usersBody.innerHTML = '<tr><td colspan="8" class="empty">No users found</td></tr>'
       renderResetLink()
       return
     }
     state.users.forEach((user) => {
       const row = document.createElement('tr')
-      const status = Number(user.must_set_password) === 1 ? 'Reset nötig' : 'Aktiv'
+      const status = Number(user.must_set_password) === 1 ? 'Reset required' : 'Active'
       const role = Number(user.is_admin) === 1 ? 'Admin' : 'User'
       row.innerHTML = `
         <td>${user.id}</td>
@@ -48,9 +48,9 @@ export function createUsersRenderer({ state, views, shell }) {
         <td>${status}</td>
         <td>${user.last_login_at ? formatDate(user.last_login_at) : '-'}</td>
         <td>
-          <button class="ghost" data-action="edit" data-id="${user.id}">Bearbeiten</button>
-          <button class="ghost" data-action="reset" data-id="${user.id}">Reset</button>
-          <button class="danger" data-action="delete" data-id="${user.id}">Löschen</button>
+          <button class="ghost" data-action="edit" data-id="${user.id}" title="Edit user details">Edit</button>
+          <button class="ghost" data-action="reset" data-id="${user.id}" title="Generate password reset link">Reset</button>
+          <button class="danger" data-action="delete" data-id="${user.id}" title="Delete this user">Delete</button>
         </td>
       `
       usersBody.appendChild(row)

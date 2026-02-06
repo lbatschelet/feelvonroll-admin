@@ -9,14 +9,14 @@ export function createPasswordResetFlow({ api, shell, views }) {
     const resetToken = resetTokenInput.value.trim()
     const password = resetPasswordInput.value
     if (!resetToken || !password) {
-      shell.setStatus('Reset-Token und Passwort fehlen', true)
+      shell.setStatus('Reset token and password are required', true)
       return
     }
     try {
       await api.setPassword({ reset_token: resetToken, password })
       resetTokenInput.value = ''
       resetPasswordInput.value = ''
-      shell.setStatus('Passwort gesetzt. Bitte einloggen.', false)
+      shell.setStatus('Password set. Please log in.', false)
       const url = new URL(window.location.href)
       url.searchParams.delete('reset_token')
       window.history.replaceState({}, '', url.toString())

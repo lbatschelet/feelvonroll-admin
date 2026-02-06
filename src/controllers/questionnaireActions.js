@@ -56,7 +56,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     await data.loadOptions()
     await data.loadTranslations()
     render.renderQuestionsList()
-    shell.setStatus('Option gespeichert', false)
+    shell.setStatus('Option saved', false)
   }
 
   const saveOptionOrder = async (questionKey, optionKeys) => {
@@ -82,7 +82,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
       return { ...option, sort: index + 1 }
     })
     render.renderQuestionsList()
-    shell.setStatus('Optionen sortiert', false)
+    shell.setStatus('Options reordered', false)
   }
 
   const saveTranslations = async (translations) => {
@@ -135,7 +135,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
         valuesByLang: translationsByLang,
       })
       if (!validation.ok) {
-        shell.setStatus(`${validation.message} für ${key}`, true)
+        shell.setStatus(`${validation.message} for ${key}`, true)
         return
       }
 

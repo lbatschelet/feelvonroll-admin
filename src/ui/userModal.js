@@ -8,18 +8,18 @@ export function createUserModal() {
   userModal.innerHTML = `
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">User erstellen</h3>
-        <button type="button" class="modal-close" aria-label="Schliessen">×</button>
+        <h3 id="modalTitle">Create user</h3>
+        <button type="button" class="modal-close" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="question-row">
           <label class="field">
-            <span>Vorname</span>
-            <input type="text" id="modalUserFirstName" placeholder="Vorname" autocomplete="given-name" />
+            <span>First name</span>
+            <input type="text" id="modalUserFirstName" placeholder="First name" autocomplete="given-name" />
           </label>
           <label class="field">
-            <span>Nachname</span>
-            <input type="text" id="modalUserLastName" placeholder="Nachname" autocomplete="family-name" />
+            <span>Last name</span>
+            <input type="text" id="modalUserLastName" placeholder="Last name" autocomplete="family-name" />
           </label>
         </div>
         <div class="question-row">
@@ -35,34 +35,34 @@ export function createUserModal() {
         </div>
         <div class="question-row modal-password">
           <label class="field">
-            <span>Passwort</span>
+            <span>Password</span>
             <input
               type="password"
               id="modalUserPassword"
-              placeholder="Passwort"
+              placeholder="Password"
               autocomplete="new-password"
             />
           </label>
           <label class="field">
-            <span>Passwort bestätigen</span>
+            <span>Confirm password</span>
             <input
               type="password"
               id="modalUserPasswordConfirm"
-              placeholder="Passwort bestätigen"
+              placeholder="Confirm password"
               autocomplete="new-password"
             />
           </label>
         </div>
-        <p class="modal-hint">Passwort leer lassen, um einen Reset-Link zu erstellen.</p>
+        <p class="modal-hint">Leave password empty to generate a reset link.</p>
         <label class="field checkbox-field">
-          <input type="checkbox" id="modalUserIsAdmin" />
+          <input type="checkbox" id="modalUserIsAdmin" title="Admins can manage users and audit logs" />
           <span>Admin</span>
         </label>
         <div class="reset-link" id="modalResetLink"></div>
       </div>
       <div class="modal-actions">
-        <button type="button" class="ghost" id="modalCancel">Abbrechen</button>
-        <button type="button" id="modalCreateUser">User erstellen</button>
+        <button type="button" class="ghost" id="modalCancel">Cancel</button>
+        <button type="button" id="modalCreateUser">Create user</button>
       </div>
     </div>
   `

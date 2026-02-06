@@ -10,12 +10,12 @@ export function createLanguagesController({ state, views, api, shell, onLanguage
   const render = createLanguagesRender({ state, views })
 
   const loadLanguages = async () => {
-    shell.setStatus('Lade Sprachen...', false)
+    shell.setStatus('Loading languages...', false)
     try {
       await data.loadLanguages()
       render.renderLanguageSelectors()
       render.renderLanguagesTable()
-      shell.setStatus('Sprachen geladen', false)
+      shell.setStatus('Languages loaded', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -25,7 +25,7 @@ export function createLanguagesController({ state, views, api, shell, onLanguage
     const lang = views.languagesView.languageCode.value.trim()
     const label = views.languagesView.languageLabel.value.trim()
     if (!lang || !label) {
-      shell.setStatus('Code und Label fehlen', true)
+      shell.setStatus('Code and label are required', true)
       return
     }
     try {
@@ -36,7 +36,7 @@ export function createLanguagesController({ state, views, api, shell, onLanguage
       render.renderLanguageSelectors()
       render.renderLanguagesTable()
       await onLanguagesChanged()
-      shell.setStatus('Sprache gespeichert', false)
+      shell.setStatus('Language saved', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -57,7 +57,7 @@ export function createLanguagesController({ state, views, api, shell, onLanguage
 
   const handleLanguageDelete = async (button) => {
     const lang = button.dataset.lang
-    const confirmed = window.confirm(`Sprache "${lang}" löschen?`)
+    const confirmed = window.confirm(`Delete language "${lang}"?`)
     if (!confirmed) return
     try {
       await api.deleteLanguage({ token: state.token, lang })

@@ -25,7 +25,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
       state.lastResetLink = buildResetLink(result.reset_token)
       renderer.renderResetLink()
       await copyResetLink(state.lastResetLink)
-      shell.setStatus(`Reset-Link für User ${id} kopiert`, false)
+      shell.setStatus(`Reset link copied for user ${id}`, false)
     } catch (error) {
       shell.setStatus(error.message, true)
     } finally {
@@ -36,7 +36,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
   const handleDelete = async (button) => {
     const id = Number(button.dataset.id)
     if (!id) return
-    const confirmed = window.confirm('User wirklich löschen?')
+    const confirmed = window.confirm('Delete this user?')
     if (!confirmed) return
     button.disabled = true
     try {
@@ -47,7 +47,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
       }
       await loader.loadUsers()
       renderer.renderUsers()
-      shell.setStatus(`User ${id} gelöscht`, false)
+      shell.setStatus(`User ${id} deleted`, false)
     } catch (error) {
       shell.setStatus(error.message, true)
     } finally {
@@ -61,7 +61,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
     const email = modalUserEmail.value.trim()
     const is_admin = modalUserIsAdmin.checked
     if (!first_name || !email) {
-      shell.setStatus('Vorname und Email fehlen', true)
+      shell.setStatus('First name and email are required', true)
       return
     }
     const password = modalUserPassword.value
@@ -82,7 +82,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
           modal.closeUserModal()
           await loader.loadUsers()
           renderer.renderUsers()
-          shell.setStatus('User aktualisiert', false)
+          shell.setStatus('User updated', false)
         })
       } catch (error) {
         shell.setStatus(error.message, true)
@@ -92,11 +92,11 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
 
     if (!useReset) {
       if (!password || password.length < 8) {
-        shell.setStatus('Passwort muss mindestens 8 Zeichen haben', true)
+        shell.setStatus('Password must be at least 8 characters', true)
         return
       }
       if (password !== passwordConfirm) {
-        shell.setStatus('Passwörter stimmen nicht überein', true)
+        shell.setStatus('Passwords do not match', true)
         return
       }
     }
@@ -135,10 +135,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
           state.loggedIn = false
           state.token = ''
           localStorage.removeItem('admin_jwt')
-          shell.setStatus(
-            useReset ? 'User erstellt. Reset-Link kopiert' : 'User erstellt. Passwort gesetzt',
-            false
-          )
+          shell.setStatus(useReset ? 'User created. Reset link copied' : 'User created. Password set', false)
           shell.setAuthSection('login')
           shell.applyVisibility()
           return
@@ -146,10 +143,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
 
         await loader.loadUsers()
         renderer.renderUsers()
-        shell.setStatus(
-          useReset ? 'User erstellt. Reset-Link kopiert' : 'User erstellt. Passwort gesetzt',
-          false
-        )
+        shell.setStatus(useReset ? 'User created. Reset link copied' : 'User created. Password set', false)
       })
     } catch (error) {
       shell.setStatus(error.message, true)

@@ -19,7 +19,7 @@ export function createQuestionnaireRender({ state, views }) {
     if (!state.questions.length) {
       const empty = document.createElement('div')
       empty.className = 'empty'
-      empty.textContent = 'Keine Fragen vorhanden'
+      empty.textContent = 'No questions found'
       questionsBody.appendChild(empty)
       return
     }
@@ -41,7 +41,7 @@ export function createQuestionnaireRender({ state, views }) {
         const label = getTranslationFor(state.selectedLanguage, labelKey) || question.question_key
         header.innerHTML = `
           <div class="question-header-main">
-            <div class="drag-handle" title="Ziehen zum Sortieren">⠿</div>
+            <div class="drag-handle" title="Drag to reorder">⠿</div>
             <div class="question-title">
               <span class="question-index">${index + 1}.</span>
               <span class="question-label">${label}</span>
@@ -69,13 +69,25 @@ export function createQuestionnaireRender({ state, views }) {
         const requiredLabel = document.createElement('label')
         requiredLabel.className = 'checkbox-inline'
         requiredLabel.appendChild(requiredToggle)
-        requiredLabel.appendChild(document.createTextNode('Pflichtfeld'))
+        requiredLabel.appendChild(document.createTextNode('Required'))
+        requiredToggle.title = 'Must be answered before submitting'
         const activeLabel = document.createElement('label')
         activeLabel.className = 'checkbox-inline'
         activeLabel.appendChild(activeToggle)
-        activeLabel.appendChild(document.createTextNode('Aktiv'))
+        activeLabel.appendChild(document.createTextNode('Active'))
+        activeToggle.title = 'Visible to end users'
         toggles.appendChild(requiredLabel)
         toggles.appendChild(activeLabel)
+        if (question.type === 'slider') {
+          const colorToggle = createCheckbox(Boolean(question.config?.use_for_color))
+          colorToggle.dataset.field = 'use_for_color'
+          colorToggle.title = 'Use this slider to color pins on the map'
+          const colorLabel = document.createElement('label')
+          colorLabel.className = 'checkbox-inline'
+          colorLabel.appendChild(colorToggle)
+          colorLabel.appendChild(document.createTextNode('Pin color'))
+          toggles.appendChild(colorLabel)
+        }
         controls.appendChild(toggles)
         body.appendChild(controls)
 
@@ -85,19 +97,20 @@ export function createQuestionnaireRender({ state, views }) {
           sliderRow.className = 'question-row slider-only'
           const minInput = createInput('number', sliderConfig.min ?? 0)
           minInput.dataset.field = 'min'
+          minInput.title = 'Lowest possible value'
           const maxInput = createInput('number', sliderConfig.max ?? 1)
           maxInput.dataset.field = 'max'
+          maxInput.title = 'Highest possible value'
           const stepInput = createInput('number', sliderConfig.step ?? 0.01)
           stepInput.dataset.field = 'step'
+          stepInput.title = 'Step size between values'
           const defaultInput = createInput('number', sliderConfig.default ?? 0.5)
           defaultInput.dataset.field = 'default'
-          const colorToggle = createCheckbox(Boolean(sliderConfig.use_for_color))
-          colorToggle.dataset.field = 'use_for_color'
+          defaultInput.title = 'Default value shown to users'
           sliderRow.appendChild(createLabeled('Min', minInput))
           sliderRow.appendChild(createLabeled('Max', maxInput))
           sliderRow.appendChild(createLabeled('Step', stepInput))
           sliderRow.appendChild(createLabeled('Default', defaultInput))
-          sliderRow.appendChild(createLabeled('Pin-Farbe', colorToggle))
           body.appendChild(sliderRow)
         }
 
@@ -106,7 +119,8 @@ export function createQuestionnaireRender({ state, views }) {
           multiRow.className = 'question-row multi-only'
           const allowMultiple = createCheckbox(Boolean(question.config?.allow_multiple))
           allowMultiple.dataset.field = 'allow_multiple'
-          multiRow.appendChild(createLabeled('Mehrfach', allowMultiple))
+          allowMultiple.title = 'Allow selecting multiple options'
+          multiRow.appendChild(createLabeled('Allow multiple', allowMultiple))
           body.appendChild(multiRow)
         }
 
@@ -115,6 +129,7 @@ export function createQuestionnaireRender({ state, views }) {
           textRow.className = 'question-row text-only'
           const rowsInput = createInput('number', question.config?.rows ?? 3)
           rowsInput.dataset.field = 'rows'
+          rowsInput.title = 'Height of the text field'
           textRow.appendChild(createLabeled('Rows', rowsInput))
           body.appendChild(textRow)
         }
@@ -131,6 +146,7 @@ export function createQuestionnaireRender({ state, views }) {
           )
           labelInput.dataset.lang = language.lang
           labelInput.dataset.field = 'label'
+          labelInput.title = 'Question label shown to users'
           group.appendChild(createLabeled('Label', labelInput))
           if (question.type === 'slider') {
             const legendLowInput = createInput(
@@ -145,6 +161,8 @@ export function createQuestionnaireRender({ state, views }) {
             )
             legendHighInput.dataset.lang = language.lang
             legendHighInput.dataset.field = 'legend_high'
+            legendLowInput.title = 'Label for the lowest value'
+            legendHighInput.title = 'Label for the highest value'
             group.appendChild(createLabeled('Legend low', legendLowInput))
             group.appendChild(createLabeled('Legend high', legendHighInput))
           }
@@ -168,8 +186,10 @@ export function createQuestionnaireRender({ state, views }) {
             row.draggable = true
             const dragHandle = document.createElement('div')
             dragHandle.className = 'option-drag'
-            dragHandle.title = 'Ziehen zum Sortieren'
+            dragHandle.title = 'Drag to reorder'
+            dragHandle.textContent = '⠿'
             const optionKeyInput = createInput('text', option.option_key, true)
+            optionKeyInput.title = 'Option key (used in the API)'
             const optionSortInput = createInput('number', option.sort ?? 0)
             optionSortInput.dataset.field = 'option-sort'
             optionSortInput.style.display = 'none'
@@ -179,12 +199,14 @@ export function createQuestionnaireRender({ state, views }) {
             optionLabelInput.dataset.field = 'option-label'
             row.appendChild(dragHandle)
             row.appendChild(createLabeled('Key', optionKeyInput))
-            row.appendChild(createLabeled('Aktiv', optionActiveInput))
+            optionActiveInput.title = 'Show this option to users'
+            optionLabelInput.title = 'Option label shown to users'
+            row.appendChild(createLabeled('Active', optionActiveInput))
             row.appendChild(createLabeled('Label', optionLabelInput))
 
-            const saveOptionButton = createButton('Speichern')
+            const saveOptionButton = createButton('Save')
             saveOptionButton.dataset.action = 'option-save'
-            const deleteOptionButton = createButton('Löschen', 'danger')
+            const deleteOptionButton = createButton('Delete', 'danger')
             deleteOptionButton.dataset.action = 'option-delete'
             row.appendChild(saveOptionButton)
             row.appendChild(deleteOptionButton)
@@ -198,12 +220,14 @@ export function createQuestionnaireRender({ state, views }) {
           addWrapper.dataset.questionKey = question.question_key
           const addKeyInput = createInput('text', '')
           addKeyInput.dataset.field = 'option-new-key'
+          addKeyInput.title = 'Option key (used in the API)'
           const addSortInput = createInput('number', '0')
           addSortInput.dataset.field = 'option-new-sort'
           addSortInput.style.display = 'none'
           const addLabelInput = createInput('text', '')
           addLabelInput.dataset.field = 'option-new-label'
-          const addButton = createButton('Option hinzufügen')
+          addLabelInput.title = 'Option label shown to users'
+          const addButton = createButton('Add option')
           addButton.dataset.action = 'option-add'
           addWrapper.appendChild(createLabeled('Key', addKeyInput))
           addWrapper.appendChild(createLabeled('Label', addLabelInput))

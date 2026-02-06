@@ -12,13 +12,13 @@ export function createPinsController({ state, views, api, shell, renderDashboard
   const actions = createPinsActions({ state, views, api, shell, render: renderer })
 
   const loadPins = async () => {
-    shell.setStatus('Lade Pins...', false)
+    shell.setStatus('Loading pins...', false)
     try {
       await loader.loadPins()
       state.error = ''
       renderer.renderPins()
       renderDashboard()
-      shell.setStatus(`Verbunden (${state.pins.length} Einträge)`, false)
+      shell.setStatus(`Connected (${state.pins.length} entries)`, false)
     } catch (error) {
       state.error = error.message
       renderer.renderPins()

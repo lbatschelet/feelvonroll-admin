@@ -10,55 +10,55 @@ export function createLoginCard() {
     <div class="auth-section" data-section="login">
       <div class="form-row">
         <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="name@domain.ch" />
+        <input type="email" id="loginEmail" placeholder="name@domain.ch" title="Admin account email" />
       </div>
       <div class="form-row">
-        <label>Passwort</label>
-        <input type="password" id="loginPassword" placeholder="Passwort" />
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Password" title="Admin account password" />
       </div>
       <div class="form-actions">
-        <button id="loginUserButton">Login</button>
-        <button id="showSetPassword" class="ghost">Passwort setzen</button>
+        <button id="loginUserButton">Log in</button>
+        <button id="showSetPassword" class="ghost">Set password</button>
       </div>
     </div>
     <div class="auth-section" data-section="set-password">
       <div class="form-row">
-        <label>Reset Token</label>
-        <input type="text" id="resetToken" placeholder="Token" />
+        <label>Reset token</label>
+        <input type="text" id="resetToken" placeholder="Token" title="Paste the reset token you received" />
       </div>
       <div class="form-row">
-        <label>Neues Passwort</label>
-        <input type="password" id="resetPassword" placeholder="Neues Passwort" />
+        <label>New password</label>
+        <input type="password" id="resetPassword" placeholder="New password" />
       </div>
       <div class="form-actions">
-        <button id="setPasswordButton">Passwort speichern</button>
-        <button id="showLogin" class="ghost">Zurück</button>
+        <button id="setPasswordButton">Save password</button>
+        <button id="showLogin" class="ghost">Back</button>
       </div>
     </div>
     <div class="auth-section" data-section="bootstrap">
       <div class="form-row">
-        <label>Admin Token</label>
-        <input type="password" id="adminToken" placeholder="Token" />
+        <label>Admin token</label>
+        <input type="password" id="adminToken" placeholder="Token" title="One-time bootstrap token" />
       </div>
       <div class="form-actions">
-        <button id="bootstrapButton">Einrichten</button>
+        <button id="bootstrapButton">Start setup</button>
       </div>
     </div>
     <div class="auth-section" data-section="bootstrap-user">
       <div class="form-row">
-        <label>Erster User (Vorname)</label>
-        <input type="text" id="bootstrapFirstName" placeholder="Vorname" />
+        <label>First user (first name)</label>
+        <input type="text" id="bootstrapFirstName" placeholder="First name" />
       </div>
       <div class="form-row">
-        <label>Erster User (Nachname)</label>
-        <input type="text" id="bootstrapLastName" placeholder="Nachname" />
+        <label>First user (last name)</label>
+        <input type="text" id="bootstrapLastName" placeholder="Last name" />
       </div>
       <div class="form-row">
-        <label>Erster User (Email)</label>
+        <label>First user (email)</label>
         <input type="email" id="bootstrapEmail" placeholder="name@domain.ch" />
       </div>
       <div class="form-actions">
-        <button type="button" id="bootstrapCreateUser">User erstellen</button>
+        <button type="button" id="bootstrapCreateUser">Create user</button>
       </div>
     </div>
   `

@@ -7,30 +7,30 @@ export function createQuestionnaireView() {
   questionnaireCard.className = 'card questionnaire-card'
   questionnaireCard.innerHTML = `
     <div class="card-header">
-      <h2>Fragebogen</h2>
+      <h2>Questionnaire</h2>
       <div class="header-actions">
-        <button id="reloadQuestionnaire" class="ghost">Neu laden</button>
-        <button id="openQuestionModal" class="ghost">Neue Frage</button>
-        <button id="saveQuestionnaire" class="primary">Änderungen speichern</button>
+        <button id="reloadQuestionnaire" class="ghost" title="Reload questionnaire data">Reload</button>
+        <button id="openQuestionModal" class="ghost">New question</button>
+        <button id="saveQuestionnaire" class="primary" title="Save all questionnaire changes">Save changes</button>
       </div>
     </div>
     <div class="question-languages">
       <label class="field">
-        <span>Optionen-Sprache</span>
-        <select id="languageSelect"></select>
+        <span>Editing language</span>
+        <select id="languageSelect" title="Language used for editing translations"></select>
       </label>
     </div>
     <div id="questionsBody" class="questionnaire-body"></div>
     <div class="modal-backdrop" id="questionModal">
       <div class="modal">
         <div class="modal-header">
-          <h3>Neue Frage</h3>
+          <h3>New question</h3>
           <button class="modal-close" id="closeQuestionModal" type="button">×</button>
         </div>
         <div class="question-row">
           <label class="field">
             <span>Key</span>
-            <input type="text" id="newQuestionKey" placeholder="z.B. wellbeing" />
+            <input type="text" id="newQuestionKey" placeholder="e.g. wellbeing" title="Unique identifier used in the API" />
           </label>
           <label class="field">
             <span>Type</span>
@@ -42,11 +42,19 @@ export function createQuestionnaireView() {
           </label>
           <label class="field">
             <span>Required</span>
-            <input type="checkbox" id="newQuestionRequired" />
+            <input type="checkbox" id="newQuestionRequired" title="Must be answered before submitting" />
           </label>
           <label class="field">
-            <span>Aktiv</span>
-            <input type="checkbox" id="newQuestionActive" checked />
+            <span>Active</span>
+            <input type="checkbox" id="newQuestionActive" checked title="Visible to end users" />
+          </label>
+          <label class="field slider-only">
+            <span>Pin color</span>
+            <input
+              type="checkbox"
+              id="newQuestionUseForColor"
+              title="Use this slider to color pins on the map"
+            />
           </label>
         </div>
         <div class="question-row question-translations" id="newQuestionTranslations"></div>
@@ -67,26 +75,22 @@ export function createQuestionnaireView() {
             <span>Default</span>
             <input type="number" id="newQuestionDefault" value="0.5" />
           </label>
-          <label class="field">
-            <span>Pin-Farbe</span>
-            <input type="checkbox" id="newQuestionUseForColor" />
-          </label>
         </div>
         <div class="question-row multi-only">
           <label class="field">
-            <span>Mehrfach</span>
-            <input type="checkbox" id="newQuestionAllowMultiple" />
+            <span>Allow multiple</span>
+            <input type="checkbox" id="newQuestionAllowMultiple" title="Allow selecting multiple options" />
           </label>
         </div>
         <div class="question-row text-only">
           <label class="field">
             <span>Rows</span>
-            <input type="number" id="newQuestionRows" value="3" />
+            <input type="number" id="newQuestionRows" value="3" title="Height of the text field" />
           </label>
         </div>
         <div class="modal-actions">
-          <button class="ghost" id="cancelQuestionModal" type="button">Abbrechen</button>
-          <button id="addQuestion" class="primary" type="button">Frage hinzufügen</button>
+          <button class="ghost" id="cancelQuestionModal" type="button">Cancel</button>
+          <button id="addQuestion" class="primary" type="button">Add question</button>
         </div>
       </div>
     </div>

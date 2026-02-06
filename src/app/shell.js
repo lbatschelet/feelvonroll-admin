@@ -85,7 +85,7 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
 
   const setUserDisplayName = (name) => {
     if (!header.userMenuButton) return
-    header.userMenuButton.textContent = name || 'Profil'
+    header.userMenuButton.textContent = name || 'Profile'
   }
 
   return { setPage, applyVisibility, setStatus, setAuthSection, setOnPageChange, setUserDisplayName }

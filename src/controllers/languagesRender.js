@@ -27,7 +27,7 @@ export function createLanguagesRender({ state, views }) {
     languagesBody.innerHTML = ''
     if (!state.languages.length) {
       const row = document.createElement('tr')
-      row.innerHTML = `<td colspan="4" class="empty">Keine Sprachen vorhanden</td>`
+      row.innerHTML = `<td colspan="4" class="empty">No languages found</td>`
       languagesBody.appendChild(row)
       return
     }
@@ -38,12 +38,12 @@ export function createLanguagesRender({ state, views }) {
         <td>${language.lang}</td>
         <td>${language.label}</td>
         <td>
-          <input type="checkbox" data-action="lang-toggle" data-lang="${language.lang}" ${
+          <input type="checkbox" data-action="lang-toggle" data-lang="${language.lang}" title="Enable this language" ${
             language.enabled ? 'checked' : ''
           } />
         </td>
         <td>
-          <button class="ghost" data-action="lang-delete" data-lang="${language.lang}">Löschen</button>
+          <button class="ghost" data-action="lang-delete" data-lang="${language.lang}" title="Delete language">Delete</button>
         </td>
       `
       languagesBody.appendChild(row)

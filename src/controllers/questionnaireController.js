@@ -24,7 +24,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
   let draggingOption = null
 
   const loadQuestionnaire = async () => {
-    shell.setStatus('Lade Fragebogen...', false)
+    shell.setStatus('Loading questionnaire...', false)
     try {
       await data.loadLanguages()
       languagesRender.renderLanguageSelectors()
@@ -32,7 +32,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
       render.renderQuestionsList()
       render.renderCreateFormVisibility()
       renderDashboard()
-      shell.setStatus('Fragebogen geladen', false)
+      shell.setStatus('Questionnaire loaded', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -76,14 +76,14 @@ export function createQuestionnaireController({ state, views, api, shell, render
     if (!row) return
     const question_key = row.dataset.questionKey
     const option_key = row.dataset.optionKey
-    const confirmed = window.confirm('Option wirklich löschen?')
+    const confirmed = window.confirm('Delete this option?')
     if (!confirmed) return
     try {
       await api.deleteOption({ token: state.token, question_key, option_key })
       await data.loadOptions()
       await data.loadTranslations()
       render.renderQuestionsList()
-      shell.setStatus('Option gelöscht', false)
+      shell.setStatus('Option deleted', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -97,7 +97,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
     const sort = Number(wrapper.querySelector('[data-field="option-new-sort"]')?.value || 0)
     const label = wrapper.querySelector('[data-field="option-new-label"]')?.value || ''
     if (!option_key) {
-      shell.setStatus('Option Key fehlt', true)
+      shell.setStatus('Option key is required', true)
       return
     }
     try {
@@ -116,7 +116,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
       await data.loadOptions()
       await data.loadTranslations()
       render.renderQuestionsList()
-      shell.setStatus('Option hinzugefügt', false)
+      shell.setStatus('Option added', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -147,11 +147,11 @@ export function createQuestionnaireController({ state, views, api, shell, render
     } = views.questionnaireView
     const key = newQuestionKey.value.trim()
     if (!key) {
-      shell.setStatus('Key fehlt', true)
+      shell.setStatus('Key is required', true)
       return
     }
     if (state.questions.find((question) => question.question_key === key)) {
-      shell.setStatus('Key existiert bereits', true)
+      shell.setStatus('Key already exists', true)
       return
     }
     const type = newQuestionType.value

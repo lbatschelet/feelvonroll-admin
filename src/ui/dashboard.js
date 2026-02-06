@@ -7,31 +7,31 @@ export function createDashboardCard() {
   dashboardCard.className = 'card dashboard-card'
   dashboardCard.innerHTML = `
     <div class="card-header">
-      <h2>Übersicht</h2>
+      <h2>Overview</h2>
     </div>
     <div class="dashboard-grid">
       <div class="dashboard-item">
-        <span class="muted">Pins gesamt</span>
+        <span class="muted">Total pins</span>
         <strong id="dashboardPinsTotal">0</strong>
       </div>
       <div class="dashboard-item">
-        <span class="muted">Pins wartend</span>
+        <span class="muted">Pending pins</span>
         <strong id="dashboardPinsPending">0</strong>
       </div>
       <div class="dashboard-item">
-        <span class="muted">Pins freigegeben</span>
+        <span class="muted">Approved pins</span>
         <strong id="dashboardPinsApproved">0</strong>
       </div>
       <div class="dashboard-item">
-        <span class="muted">Pins abgelehnt</span>
+        <span class="muted">Rejected pins</span>
         <strong id="dashboardPinsRejected">0</strong>
       </div>
       <div class="dashboard-item">
-        <span class="muted">Fragen</span>
+        <span class="muted">Questions</span>
         <strong id="dashboardQuestionsTotal">0</strong>
       </div>
       <div class="dashboard-item">
-        <span class="muted">Aktive Sprachen</span>
+        <span class="muted">Active languages</span>
         <strong id="dashboardLanguagesActive">0</strong>
       </div>
     </div>

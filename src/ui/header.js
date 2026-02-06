@@ -8,20 +8,20 @@ export function createHeader() {
   header.innerHTML = `
     <div class="header-title" data-action="dashboard" role="button" tabindex="0">
       <h1>Feelvonroll Admin</h1>
-      <p>Verwalte Pins und Freigaben</p>
+      <p>Manage pins and approvals</p>
     </div>
     <nav class="nav">
       <button class="nav-button" data-page="pins">Pins</button>
-      <button class="nav-button" data-page="questionnaire">Fragebogen</button>
-      <button class="nav-button" data-page="languages">Sprachen</button>
-      <button class="nav-button" data-page="users" data-admin-only="true">User</button>
+      <button class="nav-button" data-page="questionnaire">Questionnaire</button>
+      <button class="nav-button" data-page="languages">Languages</button>
+      <button class="nav-button" data-page="users" data-admin-only="true">Users</button>
       <button class="nav-button" data-page="audit" data-admin-only="true">Audit</button>
     </nav>
     <div class="user-menu">
-      <button class="nav-button ghost" id="userMenuButton" type="button">Profil</button>
+      <button class="nav-button ghost" id="userMenuButton" type="button">Profile</button>
       <div class="user-menu-panel" id="userMenuPanel">
-        <button type="button" data-action="profile">Profil bearbeiten</button>
-        <button type="button" data-action="logout">Logout</button>
+        <button type="button" data-action="profile">Edit profile</button>
+        <button type="button" data-action="logout">Log out</button>
       </div>
     </div>
   `

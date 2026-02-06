@@ -35,13 +35,13 @@ export function createPinsRenderer({ state, views, api, shell }) {
     state.pageIndex = page
     pinCount.textContent = String(total)
 
-    pageInfo.textContent = `Seite ${page} von ${maxPage}`
+    pageInfo.textContent = `Page ${page} of ${maxPage}`
     prevPageButton.disabled = page <= 1
     nextPageButton.disabled = page >= maxPage
 
     if (!pagePins.length) {
       const row = document.createElement('tr')
-      row.innerHTML = `<td colspan="9" class="empty">Keine Pins vorhanden</td>`
+      row.innerHTML = `<td colspan="9" class="empty">No pins found</td>`
       pinsBody.appendChild(row)
       return
     }
@@ -63,7 +63,7 @@ export function createPinsRenderer({ state, views, api, shell }) {
         <td>${escapeHtml(pin.note || '')}</td>
         <td>${formatDate(pin.created_at)}</td>
         <td>
-          <button class="toggle ${getStatusClass(pin.approved)}" data-id="${pin.id}">
+          <button class="toggle ${getStatusClass(pin.approved)}" data-id="${pin.id}" title="Click to cycle status">
             ${statusLabel}
           </button>
         </td>

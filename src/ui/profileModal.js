@@ -8,17 +8,17 @@ export function createProfileModal() {
   profileModal.innerHTML = `
     <div class="modal">
       <div class="modal-header">
-        <h3>Profil bearbeiten</h3>
-        <button type="button" class="modal-close" aria-label="Schliessen">×</button>
+        <h3>Edit profile</h3>
+        <button type="button" class="modal-close" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
         <div class="question-row">
           <label class="field">
-            <span>Vorname</span>
+            <span>First name</span>
             <input type="text" id="profileFirstName" autocomplete="given-name" />
           </label>
           <label class="field">
-            <span>Nachname</span>
+            <span>Last name</span>
             <input type="text" id="profileLastName" autocomplete="family-name" />
           </label>
         </div>
@@ -30,24 +30,24 @@ export function createProfileModal() {
         </div>
         <div class="question-row">
           <label class="field">
-            <span>Aktuelles Passwort</span>
-            <input type="password" id="profileCurrentPassword" autocomplete="current-password" />
+            <span>Current password</span>
+            <input type="password" id="profileCurrentPassword" autocomplete="current-password" title="Required to save profile changes" />
           </label>
         </div>
         <div class="question-row modal-password">
           <label class="field">
-            <span>Neues Passwort</span>
+            <span>New password</span>
             <input type="password" id="profileNewPassword" autocomplete="new-password" />
           </label>
           <label class="field">
-            <span>Neues Passwort bestätigen</span>
+            <span>Confirm new password</span>
             <input type="password" id="profileNewPasswordConfirm" autocomplete="new-password" />
           </label>
         </div>
       </div>
       <div class="modal-actions">
-        <button type="button" class="ghost" id="profileCancel">Abbrechen</button>
-        <button type="button" id="profileSave">Speichern</button>
+        <button type="button" class="ghost" id="profileCancel">Cancel</button>
+        <button type="button" id="profileSave">Save</button>
       </div>
     </div>
   `

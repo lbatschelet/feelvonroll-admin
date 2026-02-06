@@ -7,32 +7,32 @@ export function createPinsView() {
   toolsCard.className = 'card tools-card'
   toolsCard.innerHTML = `
     <div class="tools">
-      <input type="text" id="searchInput" placeholder="Suche (ID, Etage, Text)" />
-      <select id="filterSelect">
-        <option value="all">Alle</option>
-        <option value="pending">Wartet</option>
-        <option value="approved">Freigegeben</option>
-        <option value="rejected">Abgelehnt</option>
+      <input type="text" id="searchInput" placeholder="Search (ID, floor, text)" title="Filter by ID, floor, or note text" />
+      <select id="filterSelect" title="Filter by approval status">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
       </select>
-      <select id="sortSelect">
-        <option value="newest">Neueste zuerst</option>
-        <option value="oldest">Älteste zuerst</option>
-        <option value="floor">Etage</option>
-        <option value="wellbeing">Wohlbefinden</option>
+      <select id="sortSelect" title="Sort pins">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="floor">Floor</option>
+        <option value="wellbeing">Wellbeing</option>
       </select>
-      <select id="pageSizeSelect">
-        <option value="10">10 pro Seite</option>
-        <option value="25" selected>25 pro Seite</option>
-        <option value="50">50 pro Seite</option>
-        <option value="100">100 pro Seite</option>
+      <select id="pageSizeSelect" title="Rows per page">
+        <option value="10">10 per page</option>
+        <option value="25" selected>25 per page</option>
+        <option value="50">50 per page</option>
+        <option value="100">100 per page</option>
       </select>
-      <button id="reloadPins">Pins laden</button>
-      <button id="exportPinsCsv" class="ghost">CSV export</button>
+      <button id="reloadPins" title="Reload pin list">Reload</button>
+      <button id="exportPinsCsv" class="ghost" title="Download pin data as CSV">Export CSV</button>
     </div>
     <div class="pagination">
-      <button id="prevPage" class="ghost">Zurück</button>
-      <span id="pageInfo">Seite 1</span>
-      <button id="nextPage" class="ghost">Weiter</button>
+      <button id="prevPage" class="ghost">Previous</button>
+      <span id="pageInfo">Page 1</span>
+      <button id="nextPage" class="ghost">Next</button>
     </div>
   `
 
@@ -43,10 +43,10 @@ export function createPinsView() {
       <h2>Pins</h2>
       <div class="header-actions">
         <span id="pinCount">0</span>
-        <button id="approveSelected" class="ghost">Freigeben</button>
-        <button id="pendingSelected" class="ghost">Wartend</button>
-        <button id="blockSelected" class="ghost">Ablehnen</button>
-        <button id="deleteSelected" class="danger">Löschen</button>
+        <button id="approveSelected" class="ghost" title="Mark selected pins as approved">Approve</button>
+        <button id="pendingSelected" class="ghost" title="Mark selected pins as pending">Pending</button>
+        <button id="blockSelected" class="ghost" title="Mark selected pins as rejected">Reject</button>
+        <button id="deleteSelected" class="danger" title="Delete selected pins">Delete</button>
       </div>
       </div>
     <div class="table-wrap">
@@ -55,13 +55,13 @@ export function createPinsView() {
           <tr>
             <th><input type="checkbox" id="selectAll" /></th>
             <th>ID</th>
-            <th>Etage</th>
-            <th>Wohlbefinden</th>
-            <th>Gründe</th>
-            <th>Gruppe</th>
-            <th>Notiz</th>
-            <th>Erstellt</th>
-            <th>Freigabe</th>
+            <th>Floor</th>
+            <th>Wellbeing</th>
+            <th>Reasons</th>
+            <th>Group</th>
+            <th>Note</th>
+            <th>Created</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody id="pinsBody"></tbody>

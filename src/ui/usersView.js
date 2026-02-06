@@ -7,24 +7,24 @@ export function createUsersView() {
   usersCard.className = 'card users-card'
   usersCard.innerHTML = `
     <div class="card-header">
-      <h2>User</h2>
-      <button id="reloadUsers" class="ghost">Neu laden</button>
+      <h2>Users</h2>
+      <button id="reloadUsers" class="ghost" title="Reload users list">Reload</button>
     </div>
     <div class="user-actions">
-      <button type="button" id="addUser">User erstellen</button>
+      <button type="button" id="addUser" title="Create a new user">Create user</button>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>ID</th>
-            <th>Vorname</th>
-            <th>Nachname</th>
+            <th>First name</th>
+            <th>Last name</th>
             <th>Email</th>
-            <th>Rolle</th>
-            <th>Passwort</th>
-            <th>Letzter Login</th>
-            <th>Aktion</th>
+            <th>Role</th>
+            <th>Password</th>
+            <th>Last login</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="usersBody"></tbody>

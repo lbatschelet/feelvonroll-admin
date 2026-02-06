@@ -8,7 +8,7 @@ export function createAuditView() {
   auditCard.innerHTML = `
     <div class="card-header">
       <h2>Audit Log</h2>
-      <button id="reloadAudit" class="ghost">Neu laden</button>
+      <button id="reloadAudit" class="ghost">Reload</button>
     </div>
     <div class="tools audit-tools">
       <select id="auditLimit">
@@ -17,18 +17,18 @@ export function createAuditView() {
         <option value="100">100</option>
         <option value="200">200</option>
       </select>
-      <button id="auditPrev" class="ghost">Zurück</button>
+      <button id="auditPrev" class="ghost">Previous</button>
       <span id="auditInfo">0</span>
-      <button id="auditNext" class="ghost">Weiter</button>
+      <button id="auditNext" class="ghost">Next</button>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Zeit</th>
+            <th>Time</th>
             <th>User</th>
-            <th>Aktion</th>
-            <th>Ziel</th>
+            <th>Action</th>
+            <th>Target</th>
             <th>Details</th>
           </tr>
         </thead>

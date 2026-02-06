@@ -9,9 +9,9 @@ export function getNextStatus(current) {
 }
 
 export function getStatusLabel(status) {
-  if (status === 1) return 'Freigegeben'
-  if (status === -1) return 'Abgelehnt'
-  return 'Wartet'
+  if (status === 1) return 'Approved'
+  if (status === -1) return 'Rejected'
+  return 'Pending'
 }
 
 export function getStatusClass(status) {

@@ -12,7 +12,7 @@ export function createBootstrapFlow({ state, api, shell, views }) {
   const handleBootstrapLogin = async () => {
     const adminToken = tokenInput.value.trim()
     if (!adminToken) {
-      shell.setStatus('Admin Token fehlt', true)
+      shell.setStatus('Admin token is required', true)
       return
     }
     try {
@@ -22,7 +22,7 @@ export function createBootstrapFlow({ state, api, shell, views }) {
       localStorage.setItem('admin_jwt', state.token)
       state.loggedIn = true
       shell.setPage('users')
-      shell.setStatus('Bootstrap aktiv: bitte ersten User erstellen', false)
+      shell.setStatus('Bootstrap active: create the first user', false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -33,7 +33,7 @@ export function createBootstrapFlow({ state, api, shell, views }) {
     const last_name = bootstrapLastName.value.trim()
     const email = bootstrapEmail.value.trim()
     if (!first_name || !email) {
-      shell.setStatus('Vorname und Email fehlen', true)
+      shell.setStatus('First name and email are required', true)
       return
     }
     try {
@@ -49,7 +49,7 @@ export function createBootstrapFlow({ state, api, shell, views }) {
         state.loggedIn = false
         state.token = ''
         localStorage.removeItem('admin_jwt')
-        shell.setStatus(`User erstellt. Reset-Link kopiert`, false)
+        shell.setStatus(`User created. Reset link copied`, false)
         shell.setAuthSection('login')
         shell.applyVisibility()
       })

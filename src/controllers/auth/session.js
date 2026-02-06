@@ -19,7 +19,7 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
     const email = loginEmail.value.trim()
     const password = loginPassword.value
     if (!email || !password) {
-      shell.setStatus('Bitte Email und Passwort angeben', true)
+      shell.setStatus('Please enter email and password', true)
       return
     }
     try {
@@ -28,7 +28,7 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
       state.currentUserId = result.user?.id || null
       state.currentUser = result.user || null
       state.isAdmin = Boolean(result.user?.is_admin)
-      shell.setUserDisplayName(result.user?.first_name || 'Profil')
+      shell.setUserDisplayName(result.user?.first_name || 'Profile')
       state.bootstrapMode = false
       localStorage.setItem('admin_jwt', state.token)
       state.loggedIn = true
@@ -54,7 +54,7 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
     state.currentUserId = null
     state.currentUser = null
     state.isAdmin = false
-    shell.setUserDisplayName('Profil')
+    shell.setUserDisplayName('Profile')
     localStorage.removeItem('admin_jwt')
     tokenRefresh.stopTokenRefresh()
     shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
@@ -92,7 +92,7 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
           state.currentUserId = self?.id || null
           state.currentUser = self || null
           state.isAdmin = Boolean(self?.is_admin)
-          shell.setUserDisplayName(self?.first_name || 'Profil')
+          shell.setUserDisplayName(self?.first_name || 'Profile')
         }
         await loaders.loadPins()
         state.loggedIn = true
