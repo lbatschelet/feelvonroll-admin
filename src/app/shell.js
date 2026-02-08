@@ -6,8 +6,13 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
   const { header, loginCard, pages } = views
   const registry = pageRegistry || {}
   let handlePageChange = onPageChange
+  let dirtyGuards = []
 
-  const setPage = (page) => {
+  const registerDirtyGuard = (guard) => {
+    dirtyGuards.push(guard)
+  }
+
+  const navigateTo = (page) => {
     if (state.bootstrapMode && page !== 'users') {
       state.page = 'users'
     } else if (!state.isAdmin && (page === 'users' || page === 'audit')) {
@@ -19,6 +24,56 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
     if (handlePageChange) {
       handlePageChange(state.page)
     }
+  }
+
+  const setPage = (page) => {
+    if (page === state.page) return
+    const activeGuard = dirtyGuards.find((guard) => guard.isDirty())
+    if (activeGuard) {
+      showUnsavedDialog({
+        onSave: async () => {
+          await activeGuard.save()
+          navigateTo(page)
+        },
+        onDiscard: async () => {
+          await activeGuard.discard()
+          navigateTo(page)
+        },
+      })
+      return
+    }
+    navigateTo(page)
+  }
+
+  const showUnsavedDialog = ({ onSave, onDiscard }) => {
+    const dialog = views.unsavedDialog
+    if (!dialog) {
+      // Fallback if dialog not available
+      if (window.confirm('You have unsaved changes. Discard them?')) {
+        onDiscard()
+      }
+      return
+    }
+    dialog.element.classList.add('is-visible')
+
+    const cleanup = () => {
+      dialog.element.classList.remove('is-visible')
+      dialog.stayButton.removeEventListener('click', handleStay)
+      dialog.discardButton.removeEventListener('click', handleDiscard)
+      dialog.saveButton.removeEventListener('click', handleSave)
+    }
+    const handleStay = () => cleanup()
+    const handleDiscard = () => {
+      cleanup()
+      onDiscard()
+    }
+    const handleSave = async () => {
+      cleanup()
+      await onSave()
+    }
+    dialog.stayButton.addEventListener('click', handleStay)
+    dialog.discardButton.addEventListener('click', handleDiscard)
+    dialog.saveButton.addEventListener('click', handleSave)
   }
 
   const setStatus = (message, isError) => {
@@ -88,5 +143,5 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
     header.userMenuButton.textContent = name || 'Profile'
   }
 
-  return { setPage, applyVisibility, setStatus, setAuthSection, setOnPageChange, setUserDisplayName }
+  return { setPage, applyVisibility, setStatus, setAuthSection, setOnPageChange, setUserDisplayName, registerDirtyGuard }
 }

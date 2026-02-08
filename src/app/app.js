@@ -111,6 +111,8 @@ export function initApp({ state, views }) {
   })
   const auditController = createAuditController({ state, views, api: auditApi, shell })
 
+  shell.registerDirtyGuard(questionnaireController.getDirtyGuard())
+
   const pageHandlers = {
     dashboard: dashboardController.renderDashboard,
     users: usersController.renderUsers,

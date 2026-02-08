@@ -41,14 +41,9 @@ export function createAuthController({ state, views, api, shell, onOpenProfile }
     })
 
     if (views.header.titleButton) {
-      views.header.titleButton.addEventListener('click', () => {
+      views.header.titleButton.addEventListener('click', (event) => {
+        event.preventDefault()
         shell.setPage('dashboard')
-      })
-      views.header.titleButton.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          shell.setPage('dashboard')
-        }
       })
     }
 

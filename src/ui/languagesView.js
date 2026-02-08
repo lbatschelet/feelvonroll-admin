@@ -21,7 +21,7 @@ export function createLanguagesView() {
             <th>Code</th>
             <th>Label</th>
             <th>Active</th>
-            <th>Action</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="languagesBody"></tbody>

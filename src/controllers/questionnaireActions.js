@@ -19,7 +19,7 @@ export function buildQuestionConfig({ type, values }) {
     config.rows = Number(values.rows ?? 3)
   }
   if (type === 'multi') {
-    config.allow_multiple = Boolean(values.allow_multiple)
+    config.allow_multiple = !values.single_choice
   }
   return config
 }
@@ -116,7 +116,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
           default: block.querySelector('[data-field="default"]')?.value,
           use_for_color: block.querySelector('[data-field="use_for_color"]')?.checked,
           rows: block.querySelector('[data-field="rows"]')?.value,
-          allow_multiple: block.querySelector('[data-field="allow_multiple"]')?.checked,
+          single_choice: block.querySelector('[data-field="single_choice"]')?.checked,
         },
       })
 
@@ -270,7 +270,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
       newQuestionStep,
       newQuestionDefault,
       newQuestionUseForColor,
-      newQuestionAllowMultiple,
+      newQuestionSingleChoice,
       newQuestionRows,
       newQuestionType,
     } = views.questionnaireView
@@ -282,7 +282,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     newQuestionStep.value = '0.01'
     newQuestionDefault.value = '0.5'
     newQuestionUseForColor.checked = false
-    newQuestionAllowMultiple.checked = false
+    newQuestionSingleChoice.checked = true
     newQuestionRows.value = '3'
     render.renderNewQuestionTranslations(newQuestionType.value)
   }

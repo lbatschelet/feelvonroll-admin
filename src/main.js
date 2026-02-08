@@ -15,6 +15,8 @@ import { createUsersView } from './ui/usersView'
 import { createAuditView } from './ui/auditView'
 import { createUserModal } from './ui/userModal'
 import { createProfileModal } from './ui/profileModal'
+import { createUnsavedDialog } from './ui/unsavedDialog'
+import { createFooter } from './ui/footer'
 import { initApp } from './app/app'
 
 const app = document.querySelector('#app')
@@ -56,6 +58,12 @@ document.body.appendChild(profileModal.element)
 const auditView = createAuditView()
 pages.appendChild(auditView.element)
 
+const unsavedDialog = createUnsavedDialog()
+document.body.appendChild(unsavedDialog.element)
+
+const footer = createFooter()
+layout.appendChild(footer.element)
+
 app.appendChild(layout)
 
 const views = {
@@ -69,6 +77,7 @@ const views = {
   auditView,
   userModal,
   profileModal,
+  unsavedDialog,
   status,
   pages,
 }

@@ -67,12 +67,21 @@ export function createPinsController({ state, views, api, shell, renderDashboard
       state.pageIndex = 1
       renderer.renderPins()
     })
+    views.pinsView.firstPageButton.addEventListener('click', () => {
+      state.pageIndex = 1
+      renderer.renderPins()
+    })
     prevPageButton.addEventListener('click', () => {
       state.pageIndex = Math.max(1, state.pageIndex - 1)
       renderer.renderPins()
     })
     nextPageButton.addEventListener('click', () => {
       state.pageIndex += 1
+      renderer.renderPins()
+    })
+    views.pinsView.lastPageButton.addEventListener('click', () => {
+      // maxPage is computed in renderPins; set a very high number and let it clamp
+      state.pageIndex = 999999
       renderer.renderPins()
     })
     approveSelected.addEventListener('click', () => actions.bulkUpdateApproval(1))

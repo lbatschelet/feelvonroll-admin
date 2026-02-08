@@ -2,16 +2,18 @@
  * Users view builder for user list and actions.
  * Exports: createUsersView.
  */
+import { icons } from '../utils/dom'
+
 export function createUsersView() {
   const usersCard = document.createElement('section')
   usersCard.className = 'card users-card'
   usersCard.innerHTML = `
     <div class="card-header">
       <h2>Users</h2>
-      <button id="reloadUsers" class="ghost" title="Reload users list">Reload</button>
-    </div>
-    <div class="user-actions">
-      <button type="button" id="addUser" title="Create a new user">Create user</button>
+      <div class="header-actions">
+        <button id="reloadUsers" class="icon-btn-ghost" title="Reload users list">${icons.reload}</button>
+        <button type="button" id="addUser" title="Create a new user">Create user</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -24,7 +26,7 @@ export function createUsersView() {
             <th>Role</th>
             <th>Password</th>
             <th>Last login</th>
-            <th>Action</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="usersBody"></tbody>

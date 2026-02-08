@@ -2,6 +2,8 @@
  * Pins view builder with tools and table.
  * Exports: createPinsView.
  */
+import { icons } from '../utils/dom'
+
 export function createPinsView() {
   const toolsCard = document.createElement('section')
   toolsCard.className = 'card tools-card'
@@ -26,13 +28,8 @@ export function createPinsView() {
         <option value="50">50 per page</option>
         <option value="100">100 per page</option>
       </select>
-      <button id="reloadPins" title="Reload pin list">Reload</button>
+      <button id="reloadPins" class="icon-btn-ghost" title="Reload pin list">${icons.reload}</button>
       <button id="exportPinsCsv" class="ghost" title="Download pin data as CSV">Export CSV</button>
-    </div>
-    <div class="pagination">
-      <button id="prevPage" class="ghost">Previous</button>
-      <span id="pageInfo">Page 1</span>
-      <button id="nextPage" class="ghost">Next</button>
     </div>
   `
 
@@ -40,15 +37,25 @@ export function createPinsView() {
   tableCard.className = 'card'
   tableCard.innerHTML = `
     <div class="card-header">
-      <h2>Pins</h2>
+      <div class="card-header-left">
+        <h2>Pins</h2>
+        <span id="pinCount" class="muted" title="Total pins matching filter">0</span>
+      </div>
       <div class="header-actions">
-        <span id="pinCount">0</span>
+        <div class="pagination">
+          <button id="firstPage" class="icon-btn-ghost" title="First page">${icons.chevronsLeft}</button>
+          <button id="prevPage" class="icon-btn-ghost" title="Previous page">${icons.chevronLeft}</button>
+          <span id="pageInfo" class="page-info">Page 1 of 1</span>
+          <button id="nextPage" class="icon-btn-ghost" title="Next page">${icons.chevronRight}</button>
+          <button id="lastPage" class="icon-btn-ghost" title="Last page">${icons.chevronsRight}</button>
+        </div>
+        <span class="header-divider"></span>
         <button id="approveSelected" class="ghost" title="Mark selected pins as approved">Approve</button>
         <button id="pendingSelected" class="ghost" title="Mark selected pins as pending">Pending</button>
         <button id="blockSelected" class="ghost" title="Mark selected pins as rejected">Reject</button>
-        <button id="deleteSelected" class="danger" title="Delete selected pins">Delete</button>
+        <button id="deleteSelected" class="icon-btn danger" title="Delete selected pins">${icons.trash}</button>
       </div>
-      </div>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -61,7 +68,7 @@ export function createPinsView() {
             <th>Group</th>
             <th>Note</th>
             <th>Created</th>
-            <th>Status</th>
+            <th class="text-right">Status</th>
           </tr>
         </thead>
         <tbody id="pinsBody"></tbody>
@@ -75,9 +82,11 @@ export function createPinsView() {
     reloadButton: toolsCard.querySelector('#reloadPins'),
     exportCsvButton: toolsCard.querySelector('#exportPinsCsv'),
     pageSizeSelect: toolsCard.querySelector('#pageSizeSelect'),
-    prevPageButton: toolsCard.querySelector('#prevPage'),
-    nextPageButton: toolsCard.querySelector('#nextPage'),
-    pageInfo: toolsCard.querySelector('#pageInfo'),
+    firstPageButton: tableCard.querySelector('#firstPage'),
+    prevPageButton: tableCard.querySelector('#prevPage'),
+    nextPageButton: tableCard.querySelector('#nextPage'),
+    lastPageButton: tableCard.querySelector('#lastPage'),
+    pageInfo: tableCard.querySelector('#pageInfo'),
     searchInput: toolsCard.querySelector('#searchInput'),
     filterSelect: toolsCard.querySelector('#filterSelect'),
     sortSelect: toolsCard.querySelector('#sortSelect'),

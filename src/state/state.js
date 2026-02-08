@@ -37,5 +37,6 @@ export function createInitialState() {
     currentUserId: null,
     currentUser: null,
     isAdmin: false,
+    questionnaireDirty: false,
   }
 }

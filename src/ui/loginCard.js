@@ -6,7 +6,7 @@ export function createLoginCard() {
   const loginCard = document.createElement('section')
   loginCard.className = 'card login-card'
   loginCard.innerHTML = `
-    <h2>Admin Login</h2>
+    <h2>Login</h2>
     <div class="auth-section" data-section="login">
       <div class="form-row">
         <label>Email</label>

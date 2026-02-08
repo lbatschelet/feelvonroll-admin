@@ -10,8 +10,10 @@ export function createPinsRenderer({ state, views, api, shell }) {
   const {
     pinCount,
     pageInfo,
+    firstPageButton,
     prevPageButton,
     nextPageButton,
+    lastPageButton,
     pinsBody,
   } = views.pinsView
 
@@ -36,8 +38,10 @@ export function createPinsRenderer({ state, views, api, shell }) {
     pinCount.textContent = String(total)
 
     pageInfo.textContent = `Page ${page} of ${maxPage}`
+    firstPageButton.disabled = page <= 1
     prevPageButton.disabled = page <= 1
     nextPageButton.disabled = page >= maxPage
+    lastPageButton.disabled = page >= maxPage
 
     if (!pagePins.length) {
       const row = document.createElement('tr')
@@ -62,7 +66,7 @@ export function createPinsRenderer({ state, views, api, shell }) {
         <td>${groupLabel}</td>
         <td>${escapeHtml(pin.note || '')}</td>
         <td>${formatDate(pin.created_at)}</td>
-        <td>
+        <td class="text-right">
           <button class="toggle ${getStatusClass(pin.approved)}" data-id="${pin.id}" title="Click to cycle status">
             ${statusLabel}
           </button>

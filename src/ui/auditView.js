@@ -2,13 +2,15 @@
  * Audit view builder for audit log table and pagination.
  * Exports: createAuditView.
  */
+import { icons } from '../utils/dom'
+
 export function createAuditView() {
   const auditCard = document.createElement('section')
   auditCard.className = 'card audit-card'
   auditCard.innerHTML = `
     <div class="card-header">
       <h2>Audit Log</h2>
-      <button id="reloadAudit" class="ghost">Reload</button>
+      <button id="reloadAudit" class="icon-btn-ghost" title="Reload audit log">${icons.reload}</button>
     </div>
     <div class="tools audit-tools">
       <select id="auditLimit">

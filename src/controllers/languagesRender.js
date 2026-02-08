@@ -3,6 +3,7 @@
  * Exports: createLanguagesRender.
  */
 import { getActiveLanguages } from '../services/languagesService'
+import { icons } from '../utils/dom'
 
 export function createLanguagesRender({ state, views }) {
   const { languageSelect } = views.questionnaireView
@@ -42,8 +43,8 @@ export function createLanguagesRender({ state, views }) {
             language.enabled ? 'checked' : ''
           } />
         </td>
-        <td>
-          <button class="ghost" data-action="lang-delete" data-lang="${language.lang}" title="Delete language">Delete</button>
+        <td class="actions-cell">
+          <button class="icon-btn danger" data-action="lang-delete" data-lang="${language.lang}" title="Delete language">${icons.trash}</button>
         </td>
       `
       languagesBody.appendChild(row)

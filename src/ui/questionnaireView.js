@@ -2,6 +2,8 @@
  * Questionnaire view builder for question editor UI.
  * Exports: createQuestionnaireView.
  */
+import { icons } from '../utils/dom'
+
 export function createQuestionnaireView() {
   const questionnaireCard = document.createElement('section')
   questionnaireCard.className = 'card questionnaire-card'
@@ -9,7 +11,7 @@ export function createQuestionnaireView() {
     <div class="card-header">
       <h2>Questionnaire</h2>
       <div class="header-actions">
-        <button id="reloadQuestionnaire" class="ghost" title="Reload questionnaire data">Reload</button>
+        <button id="reloadQuestionnaire" class="icon-btn-ghost" title="Reload questionnaire data">${icons.reload}</button>
         <button id="openQuestionModal" class="ghost">New question</button>
         <button id="saveQuestionnaire" class="primary" title="Save all questionnaire changes">Save changes</button>
       </div>
@@ -75,8 +77,8 @@ export function createQuestionnaireView() {
         </div>
         <div class="question-row multi-only">
           <label class="field">
-            <span>Allow multiple</span>
-            <input type="checkbox" id="newQuestionAllowMultiple" title="Allow selecting multiple options" />
+            <span>Single choice</span>
+            <input type="checkbox" id="newQuestionSingleChoice" checked title="Checked: only one option can be selected. Unchecked: multiple options can be selected." />
           </label>
         </div>
         <div class="question-row text-only">
@@ -113,7 +115,7 @@ export function createQuestionnaireView() {
     newQuestionStep: questionnaireCard.querySelector('#newQuestionStep'),
     newQuestionDefault: questionnaireCard.querySelector('#newQuestionDefault'),
     newQuestionUseForColor: questionnaireCard.querySelector('#newQuestionUseForColor'),
-    newQuestionAllowMultiple: questionnaireCard.querySelector('#newQuestionAllowMultiple'),
+    newQuestionSingleChoice: questionnaireCard.querySelector('#newQuestionSingleChoice'),
     newQuestionRows: questionnaireCard.querySelector('#newQuestionRows'),
     addQuestionButton: questionnaireCard.querySelector('#addQuestion'),
   }

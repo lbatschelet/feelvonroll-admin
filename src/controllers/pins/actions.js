@@ -53,11 +53,15 @@ export function createPinsActions({ state, views, api, shell, render }) {
   const exportCsv = async () => {
     shell.setStatus('Exporting CSV...', false)
     try {
-      const { blob, filename } = await api.exportPinsCsv({ token: state.token })
+      const { blob } = await api.exportPinsCsv({ token: state.token })
+      const now = new Date()
+      const date = String(now.getFullYear())
+        + String(now.getMonth() + 1).padStart(2, '0')
+        + String(now.getDate()).padStart(2, '0')
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = filename || 'pins.csv'
+      link.download = `${date}_feelvonRoll_pins.csv`
       document.body.appendChild(link)
       link.click()
       link.remove()

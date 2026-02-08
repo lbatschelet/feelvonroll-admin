@@ -4,6 +4,7 @@
  */
 import { escapeHtml, formatDate } from '../../utils/format'
 import { copyResetLink } from '../../utils/resetLink'
+import { icons } from '../../utils/dom'
 
 export function createUsersRenderer({ state, views, shell }) {
   const { usersBody, resetLinkBox } = views.usersView
@@ -47,10 +48,10 @@ export function createUsersRenderer({ state, views, shell }) {
         <td>${role}</td>
         <td>${status}</td>
         <td>${user.last_login_at ? formatDate(user.last_login_at) : '-'}</td>
-        <td>
+        <td class="actions-cell">
           <button class="ghost" data-action="edit" data-id="${user.id}" title="Edit user details">Edit</button>
           <button class="ghost" data-action="reset" data-id="${user.id}" title="Generate password reset link">Reset</button>
-          <button class="danger" data-action="delete" data-id="${user.id}" title="Delete this user">Delete</button>
+          <button class="icon-btn danger" data-action="delete" data-id="${user.id}" title="Delete this user">${icons.trash}</button>
         </td>
       `
       usersBody.appendChild(row)

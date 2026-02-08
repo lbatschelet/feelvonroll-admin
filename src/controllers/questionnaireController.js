@@ -23,6 +23,14 @@ export function createQuestionnaireController({ state, views, api, shell, render
   })
   let draggingOption = null
 
+  const markClean = () => {
+    state.questionnaireDirty = false
+  }
+
+  const markDirty = () => {
+    state.questionnaireDirty = true
+  }
+
   const loadQuestionnaire = async () => {
     shell.setStatus('Loading questionnaire...', false)
     try {
@@ -31,6 +39,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
       await Promise.all([data.loadQuestions(), data.loadOptions(), data.loadTranslations()])
       render.renderQuestionsList()
       render.renderCreateFormVisibility()
+      markClean()
       renderDashboard()
       shell.setStatus('Questionnaire loaded', false)
     } catch (error) {
@@ -134,7 +143,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
       newQuestionStep,
       newQuestionDefault,
       newQuestionUseForColor,
-      newQuestionAllowMultiple,
+      newQuestionSingleChoice,
       newQuestionRows,
     } = views.questionnaireView
     const key = newQuestionKey.value.trim()
@@ -160,7 +169,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
         step: newQuestionStep.value,
         default: newQuestionDefault.value,
         use_for_color: newQuestionUseForColor.checked,
-        allow_multiple: newQuestionAllowMultiple.checked,
+        single_choice: newQuestionSingleChoice.checked,
         rows: newQuestionRows.value,
       },
     })
@@ -168,15 +177,17 @@ export function createQuestionnaireController({ state, views, api, shell, render
     actions.resetNewQuestionForm()
     closeQuestionModal()
     render.renderQuestionsList()
+    markDirty()
   }
 
   const bindEvents = () => {
     views.questionnaireView.reloadQuestionnaireButton.addEventListener('click', () =>
       loadQuestionnaire()
     )
-    views.questionnaireView.saveQuestionnaireButton.addEventListener('click', () =>
-      actions.saveQuestionnaire()
-    )
+    views.questionnaireView.saveQuestionnaireButton.addEventListener('click', async () => {
+      await actions.saveQuestionnaire()
+      markClean()
+    })
     views.questionnaireView.openQuestionModalButton.addEventListener('click', () =>
       openQuestionModal()
     )
@@ -190,6 +201,15 @@ export function createQuestionnaireController({ state, views, api, shell, render
       render.renderCreateFormVisibility()
     )
     views.questionnaireView.addQuestionButton.addEventListener('click', () => handleAddQuestion())
+
+    // Track dirty state on any text input or checkbox change inside the questions body
+    views.questionnaireView.questionsBody.addEventListener('input', () => markDirty())
+    views.questionnaireView.questionsBody.addEventListener('change', (event) => {
+      // Don't mark dirty for option-active toggles (they save immediately)
+      if (!event.target.closest('[data-field="option-active"]')) {
+        markDirty()
+      }
+    })
 
     views.questionnaireView.questionsBody.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-action]')
@@ -288,9 +308,25 @@ export function createQuestionnaireController({ state, views, api, shell, render
       if (dragKey && dragKey !== dropKey) {
         state.questions = reorderQuestions(state.questions, dragKey, dropKey)
         render.renderQuestionsList()
+        markDirty()
       }
     })
   }
 
-  return { bindEvents, loadQuestionnaire, loadTranslations }
+  const saveAndClean = async () => {
+    await actions.saveQuestionnaire()
+    markClean()
+  }
+
+  const discardChanges = async () => {
+    await loadQuestionnaire()
+  }
+
+  const getDirtyGuard = () => ({
+    isDirty: () => state.questionnaireDirty && state.page === 'questionnaire',
+    save: saveAndClean,
+    discard: discardChanges,
+  })
+
+  return { bindEvents, loadQuestionnaire, loadTranslations, getDirtyGuard }
 }
