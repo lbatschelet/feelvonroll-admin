@@ -1,9 +1,9 @@
 # feelvonroll-admin
 
-Admin panel for the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project. Provides a web interface to manage pins, the questionnaire, translations, users, and languages.
+Admin panel for the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project. Provides a web interface to manage pins, configure the questionnaire and its translations, and administer users and languages.
 
 > [!NOTE]
-> Part of the feelvonRoll project. See the [main repository](https://github.com/lbatschelet/feelvonroll) for full documentation.
+> Part of the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project, developed for [PHBern](https://www.phbern.ch) within [RealTransform](https://sustainability.uzh.ch/de/forschung-lehre/forschung/realtransform.html). See the [main repository](https://github.com/lbatschelet/feelvonroll) for full documentation and project context.
 
 ## Features
 
@@ -58,4 +58,4 @@ The admin panel uses JWT-based authentication. On first setup, a bootstrap flow 
 
 ## License
 
-[AGPL-3.0](LICENSE)
+[AGPL-3.0](LICENSE) -- [Lukas Batschelet](https://lukasbatschelet.ch) for [PHBern](https://www.phbern.ch)
