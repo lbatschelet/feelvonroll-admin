@@ -24,7 +24,7 @@ async function parseError(response) {
 }
 
 export async function requestJson(url, options = {}) {
-  const response = await fetch(url, options)
+  const response = await fetch(url, { cache: 'no-store', ...options })
   if (!response.ok) {
     const message = await parseError(response)
     throw new Error(message)
@@ -33,7 +33,7 @@ export async function requestJson(url, options = {}) {
 }
 
 export async function requestBlob(url, options = {}) {
-  const response = await fetch(url, options)
+  const response = await fetch(url, { cache: 'no-store', ...options })
   if (!response.ok) {
     const message = await parseError(response)
     throw new Error(message)

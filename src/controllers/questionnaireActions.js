@@ -4,7 +4,6 @@
  */
 import { validateQuestionTranslations } from '../services/questionnaireService'
 import { runWithButtonFeedback } from '../utils/buttonFeedback'
-import { getActiveLanguages } from '../services/languagesService'
 
 export function buildQuestionConfig({ type, values }) {
   const config = {}
@@ -68,7 +67,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
   }
 
   const saveQuestionnaire = async () => {
-    const activeLanguages = getActiveLanguages(state.languages)
+    const activeLanguages = state.languages
     const blocks = Array.from(questionsBody.querySelectorAll('.question-block'))
     const payloads = []
 
@@ -193,7 +192,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
   }
 
   const collectNewQuestionTranslations = (type) => {
-    const activeLanguages = getActiveLanguages(state.languages)
+    const activeLanguages = state.languages
     const translationsByLang = {}
     for (const language of activeLanguages) {
       const labelInput = newQuestionTranslations.querySelector(

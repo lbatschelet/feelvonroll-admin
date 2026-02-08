@@ -3,5 +3,5 @@
  * Exports: getActiveLanguages.
  */
 export function getActiveLanguages(languages) {
-  return languages.filter((language) => language.enabled)
+  return languages.filter((language) => Number(language.enabled) === 1)
 }

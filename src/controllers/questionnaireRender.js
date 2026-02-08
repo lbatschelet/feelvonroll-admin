@@ -3,7 +3,6 @@
  * Exports: createQuestionnaireRender.
  */
 import { createButton, createCheckbox, createInput, createLabeled, icons } from '../utils/dom'
-import { getActiveLanguages } from '../services/languagesService'
 
 export function createQuestionnaireRender({ state, views }) {
   const questionnaireView = views.questionnaireView
@@ -136,7 +135,7 @@ export function createQuestionnaireRender({ state, views }) {
 
         const translationsWrapper = document.createElement('div')
         translationsWrapper.className = 'translations-row'
-        getActiveLanguages(state.languages).forEach((language) => {
+        state.languages.forEach((language) => {
           const group = document.createElement('div')
           group.className = 'translation-group'
           group.innerHTML = `<div class="translation-title">${language.label} (${language.lang})</div>`
@@ -171,7 +170,7 @@ export function createQuestionnaireRender({ state, views }) {
         body.appendChild(translationsWrapper)
 
         if (question.type === 'multi') {
-          const activeLanguages = getActiveLanguages(state.languages)
+          const activeLanguages = state.languages
           const options = state.options
             .filter((option) => option.question_key === question.question_key)
             .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
@@ -303,7 +302,7 @@ export function createQuestionnaireRender({ state, views }) {
 
   const renderNewQuestionTranslations = (type) => {
     newQuestionTranslations.innerHTML = ''
-    getActiveLanguages(state.languages).forEach((language) => {
+    state.languages.forEach((language) => {
       const group = document.createElement('div')
       group.className = 'translation-group'
       group.innerHTML = `<div class="translation-title">${language.label} (${language.lang})</div>`

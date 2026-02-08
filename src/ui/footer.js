@@ -12,9 +12,7 @@ export function createFooter() {
         © ${year}
         <a href="https://lukasbatschelet.ch" target="_blank" rel="noopener">Lukas Batschelet</a>
         for
-        <a href="https://www.phbern.ch" target="_blank" rel="noopener" class="footer-phbern" title="PHBern">
-          <img src="https://www.phbern.ch/themes/custom/phbern/logo.svg" alt="PHBern" class="phbern-logo" />
-        </a>
+        <a href="https://www.phbern.ch" target="_blank" rel="noopener" class="footer-phbern" title="PHBern"><strong>PH</strong>&thinsp;Bern</a>
       </span>
       <span class="footer-license">
         Licensed under <a href="https://github.com/lbatschelet/feelvonroll-admin/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a>

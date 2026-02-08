@@ -2,7 +2,6 @@
  * Languages render helpers for language selectors and table.
  * Exports: createLanguagesRender.
  */
-import { getActiveLanguages } from '../services/languagesService'
 import { icons } from '../utils/dom'
 
 export function createLanguagesRender({ state, views }) {
@@ -11,15 +10,16 @@ export function createLanguagesRender({ state, views }) {
 
   const renderLanguageSelectors = () => {
     languageSelect.innerHTML = ''
-    const active = getActiveLanguages(state.languages)
-    active.forEach((language) => {
+    // Admin shows ALL languages (including inactive) so translators can work on them.
+    state.languages.forEach((language) => {
       const option = document.createElement('option')
       option.value = language.lang
-      option.textContent = `${language.label} (${language.lang})`
+      const inactive = Number(language.enabled) !== 1
+      option.textContent = `${language.label} (${language.lang})${inactive ? ' — inactive' : ''}`
       languageSelect.appendChild(option)
     })
-    if (!active.find((language) => language.lang === state.selectedLanguage)) {
-      state.selectedLanguage = active[0]?.lang || state.selectedLanguage
+    if (!state.languages.find((language) => language.lang === state.selectedLanguage)) {
+      state.selectedLanguage = state.languages[0]?.lang || state.selectedLanguage
     }
     languageSelect.value = state.selectedLanguage
   }
@@ -40,7 +40,7 @@ export function createLanguagesRender({ state, views }) {
         <td>${language.label}</td>
         <td>
           <input type="checkbox" data-action="lang-toggle" data-lang="${language.lang}" title="Enable this language" ${
-            language.enabled ? 'checked' : ''
+            Number(language.enabled) === 1 ? 'checked' : ''
           } />
         </td>
         <td class="actions-cell">

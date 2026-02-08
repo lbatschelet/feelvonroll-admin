@@ -13,6 +13,7 @@ import { createLanguagesView } from './ui/languagesView'
 import { createQuestionnaireView } from './ui/questionnaireView'
 import { createUsersView } from './ui/usersView'
 import { createAuditView } from './ui/auditView'
+import { createContentView } from './ui/contentView'
 import { createUserModal } from './ui/userModal'
 import { createProfileModal } from './ui/profileModal'
 import { createUnsavedDialog } from './ui/unsavedDialog'
@@ -58,6 +59,9 @@ document.body.appendChild(profileModal.element)
 const auditView = createAuditView()
 pages.appendChild(auditView.element)
 
+const contentView = createContentView()
+pages.appendChild(contentView.element)
+
 const unsavedDialog = createUnsavedDialog()
 document.body.appendChild(unsavedDialog.element)
 
@@ -75,6 +79,7 @@ const views = {
   questionnaireView,
   usersView,
   auditView,
+  contentView,
   userModal,
   profileModal,
   unsavedDialog,

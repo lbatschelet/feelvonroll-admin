@@ -3,12 +3,9 @@
  * Exports: loadLanguages, loadQuestions, loadOptions, loadTranslations,
  *          computeSelectedLanguage, mergeTranslations.
  */
-import { getActiveLanguages } from '../services/languagesService'
-
 export function computeSelectedLanguage({ languages, selectedLanguage }) {
-  const activeLanguages = getActiveLanguages(languages)
-  const fallbackLanguage = activeLanguages[0]?.lang || languages[0]?.lang || 'de'
-  if (!selectedLanguage || !activeLanguages.find((lang) => lang.lang === selectedLanguage)) {
+  const fallbackLanguage = languages[0]?.lang || 'de'
+  if (!selectedLanguage || !languages.find((lang) => lang.lang === selectedLanguage)) {
     return fallbackLanguage
   }
   return selectedLanguage
@@ -43,10 +40,9 @@ export function createQuestionnaireData({ state, api }) {
   }
 
   const loadTranslations = async () => {
-    const activeLanguages = getActiveLanguages(state.languages)
     const allByLang = {}
     await Promise.all(
-      activeLanguages.map(async (language) => {
+      state.languages.map(async (language) => {
         const [questionTranslations, optionTranslations] = await Promise.all([
           api.fetchTranslations({ lang: language.lang, prefix: 'questions.' }),
           api.fetchTranslations({ lang: language.lang, prefix: 'options.' }),

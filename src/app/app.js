@@ -10,6 +10,7 @@ import { createQuestionnaireController } from '../controllers/questionnaireContr
 import { createLanguagesController } from '../controllers/languagesController'
 import { createUsersController } from '../controllers/usersController'
 import { createAuditController } from '../controllers/auditController'
+import { createContentController } from '../controllers/contentController'
 import { createDashboardController } from '../controllers/dashboardController'
 import { createProfileController } from '../controllers/profileController'
 
@@ -21,6 +22,7 @@ export function initApp({ state, views }) {
     languages: [views.languagesView.element],
     users: [views.usersView.element],
     audit: [views.auditView.element],
+    content: [views.contentView.element],
   }
 
   const authApi = {
@@ -62,6 +64,11 @@ export function initApp({ state, views }) {
     resetUserPassword: api.resetUserPassword,
   }
   const auditApi = { fetchAuditLogs: api.fetchAuditLogs }
+  const contentApi = {
+    fetchContent: api.fetchContent,
+    upsertContent: api.upsertContent,
+    fetchLanguages: api.fetchLanguages,
+  }
 
   const dashboardController = createDashboardController({ state, views })
   const shell = createShell({ state, views, pageRegistry })
@@ -110,6 +117,7 @@ export function initApp({ state, views }) {
     onLogout: authController.handleLogout,
   })
   const auditController = createAuditController({ state, views, api: auditApi, shell })
+  const contentController = createContentController({ state, views, api: contentApi, shell })
 
   shell.registerDirtyGuard(questionnaireController.getDirtyGuard())
 
@@ -118,6 +126,7 @@ export function initApp({ state, views }) {
     users: usersController.renderUsers,
     audit: auditController.loadAuditLogs,
     languages: languagesController.loadLanguages,
+    content: contentController.loadContent,
   }
   shell.setOnPageChange((page) => {
     const handler = pageHandlers[page]
@@ -140,6 +149,7 @@ export function initApp({ state, views }) {
   languagesController.bindEvents()
   usersController.bindEvents()
   auditController.bindEvents()
+  contentController.bindEvents()
 
   authController.init()
 }
