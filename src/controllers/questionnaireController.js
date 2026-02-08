@@ -250,12 +250,14 @@ export function createQuestionnaireController({ state, views, api, shell, render
       const optionRow = event.target.closest('.option-row')
       if (optionRow) {
         optionRow.classList.remove('dragging')
+        optionRow.draggable = false
         draggingOption = null
         return
       }
       const wrapper = event.target.closest('.question-block')
       if (!wrapper) return
       wrapper.classList.remove('dragging')
+      wrapper.draggable = false
       state.draggingKey = null
     })
     views.questionnaireView.questionsBody.addEventListener('dragover', (event) => {

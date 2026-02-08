@@ -3,18 +3,38 @@
  * Exports: createAuditRenderer.
  */
 import { escapeHtml, formatDate } from '../../utils/format'
-import { formatAuditInfo } from '../../services/auditService'
 
 export function createAuditRenderer({ state, views }) {
-  const { auditInfo, auditBody, auditPrevButton, auditNextButton } = views.auditView
+  const {
+    auditCount,
+    auditPageInfo,
+    auditFirstButton,
+    auditPrevButton,
+    auditNextButton,
+    auditLastButton,
+    auditBody,
+  } = views.auditView
 
   const renderAuditLogs = () => {
     auditBody.innerHTML = ''
+
+    const total = state.audit.total || 0
+    const limit = state.audit.limit || 50
+    const maxPage = Math.max(1, Math.ceil(total / limit))
+    const page = Math.min(maxPage, Math.max(1, Math.floor(state.audit.offset / limit) + 1))
+
+    // Clamp offset to valid range
+    state.audit.offset = (page - 1) * limit
+
+    auditCount.textContent = String(total)
+    auditPageInfo.textContent = `Page ${page} of ${maxPage}`
+    auditFirstButton.disabled = page <= 1
+    auditPrevButton.disabled = page <= 1
+    auditNextButton.disabled = page >= maxPage
+    auditLastButton.disabled = page >= maxPage
+
     if (!state.audit.items.length) {
       auditBody.innerHTML = '<tr><td colspan="5" class="empty">No entries</td></tr>'
-      auditInfo.textContent = '0'
-      auditPrevButton.disabled = true
-      auditNextButton.disabled = true
       return
     }
     state.audit.items.forEach((item) => {
@@ -29,13 +49,6 @@ export function createAuditRenderer({ state, views }) {
       `
       auditBody.appendChild(row)
     })
-    auditInfo.textContent = formatAuditInfo({
-      offset: state.audit.offset,
-      limit: state.audit.limit,
-      total: state.audit.total,
-    })
-    auditPrevButton.disabled = state.audit.offset <= 0
-    auditNextButton.disabled = state.audit.offset + state.audit.limit >= state.audit.total
   }
 
   return { renderAuditLogs }

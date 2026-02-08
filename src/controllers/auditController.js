@@ -19,10 +19,21 @@ export function createAuditController({ state, views, api, shell }) {
   }
 
   const bindEvents = () => {
-    const { reloadAuditButton, auditLimitSelect, auditPrevButton, auditNextButton } = views.auditView
+    const {
+      reloadAuditButton,
+      auditLimitSelect,
+      auditFirstButton,
+      auditPrevButton,
+      auditNextButton,
+      auditLastButton,
+    } = views.auditView
     reloadAuditButton.addEventListener('click', () => loadAuditLogs())
     auditLimitSelect.addEventListener('change', (event) => {
       state.audit.limit = Number(event.target.value)
+      state.audit.offset = 0
+      loadAuditLogs()
+    })
+    auditFirstButton.addEventListener('click', () => {
       state.audit.offset = 0
       loadAuditLogs()
     })
@@ -32,6 +43,11 @@ export function createAuditController({ state, views, api, shell }) {
     })
     auditNextButton.addEventListener('click', () => {
       state.audit.offset += state.audit.limit
+      loadAuditLogs()
+    })
+    auditLastButton.addEventListener('click', () => {
+      const maxPage = Math.max(1, Math.ceil((state.audit.total || 0) / state.audit.limit))
+      state.audit.offset = (maxPage - 1) * state.audit.limit
       loadAuditLogs()
     })
   }

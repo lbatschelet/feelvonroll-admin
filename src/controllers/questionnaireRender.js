@@ -32,7 +32,6 @@ export function createQuestionnaireRender({ state, views }) {
         wrapper.dataset.key = question.question_key
         wrapper.dataset.type = question.type
         wrapper.open = false
-        wrapper.draggable = true
 
         const header = document.createElement('summary')
         header.className = 'question-header'
@@ -210,15 +209,16 @@ export function createQuestionnaireRender({ state, views }) {
               tr.className = 'option-row'
               tr.dataset.questionKey = question.question_key
               tr.dataset.optionKey = option.option_key
-              tr.draggable = true
 
               const dragTd = document.createElement('td')
               dragTd.className = 'col-drag'
-              const dragHandle = document.createElement('span')
-              dragHandle.className = 'option-drag'
-              dragHandle.title = 'Drag to reorder'
-              dragHandle.textContent = '⠿'
-              dragTd.appendChild(dragHandle)
+              const optionDragHandle = document.createElement('span')
+              optionDragHandle.className = 'option-drag'
+              optionDragHandle.title = 'Drag to reorder'
+              optionDragHandle.textContent = '⠿'
+              optionDragHandle.addEventListener('mousedown', () => { tr.draggable = true })
+              optionDragHandle.addEventListener('mouseup', () => { tr.draggable = false })
+              dragTd.appendChild(optionDragHandle)
               tr.appendChild(dragTd)
 
               const keyTd = document.createElement('td')
@@ -279,6 +279,13 @@ export function createQuestionnaireRender({ state, views }) {
           addWrapper.appendChild(addButton)
           optionsWrapper.appendChild(addWrapper)
           body.appendChild(optionsWrapper)
+        }
+
+        // Enable draggable only when the drag handle is grabbed
+        const dragHandle = header.querySelector('.drag-handle')
+        if (dragHandle) {
+          dragHandle.addEventListener('mousedown', () => { wrapper.draggable = true })
+          dragHandle.addEventListener('mouseup', () => { wrapper.draggable = false })
         }
 
         wrapper.appendChild(body)
