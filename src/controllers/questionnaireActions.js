@@ -41,24 +41,6 @@ export function buildNewQuestion({ key, type, required, isActive, config, existi
 export function createQuestionnaireActions({ state, views, api, shell, data, render, renderDashboard }) {
   const { questionsBody, saveQuestionnaireButton, newQuestionTranslations } = views.questionnaireView
 
-  const saveOption = async ({ question_key, option_key, sort, is_active, translation_key, label }) => {
-    await api.upsertOption({
-      token: state.token,
-      question_key,
-      option_key,
-      sort,
-      is_active,
-      translation_key,
-    })
-    if (label !== undefined) {
-      await saveTranslations({ [translation_key]: label })
-    }
-    await data.loadOptions()
-    await data.loadTranslations()
-    render.renderQuestionsList()
-    shell.setStatus('Option saved', false)
-  }
-
   const saveOptionOrder = async (questionKey, optionKeys) => {
     const updates = optionKeys.map((option_key, index) => {
       const option = state.options.find(
@@ -83,20 +65,6 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     })
     render.renderQuestionsList()
     shell.setStatus('Options reordered', false)
-  }
-
-  const saveTranslations = async (translations) => {
-    const entries = Object.entries(translations)
-    if (!entries.length) return
-    for (const [translationKey, text] of entries) {
-      await api.upsertTranslation({
-        token: state.token,
-        translation_key: translationKey,
-        lang: state.selectedLanguage,
-        text,
-      })
-    }
-    await data.loadTranslations()
   }
 
   const saveQuestionnaire = async () => {
@@ -165,6 +133,18 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
       })
     }
 
+    // Collect option translations from the table
+    const optionTranslations = []
+    const optionInputs = questionsBody.querySelectorAll('input[data-field="option-translation"]')
+    optionInputs.forEach((input) => {
+      const lang = input.dataset.lang
+      const translationKey = input.dataset.translationKey
+      const text = input.value.trim()
+      if (translationKey && lang) {
+        optionTranslations.push({ lang, translation_key: translationKey, text })
+      }
+    })
+
     try {
       await runWithButtonFeedback(saveQuestionnaireButton, async () => {
         for (const payload of payloads) {
@@ -191,6 +171,14 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
               })
             }
           }
+        }
+        for (const entry of optionTranslations) {
+          await api.upsertTranslation({
+            token: state.token,
+            translation_key: entry.translation_key,
+            lang: entry.lang,
+            text: entry.text,
+          })
         }
       })
     } catch (error) {
@@ -300,9 +288,7 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
   }
 
   return {
-    saveOption,
     saveOptionOrder,
-    saveTranslations,
     saveQuestionnaire,
     addQuestion,
     resetNewQuestionForm,

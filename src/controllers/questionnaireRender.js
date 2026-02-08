@@ -171,13 +171,21 @@ export function createQuestionnaireRender({ state, views }) {
         body.appendChild(translationsWrapper)
 
         if (question.type === 'multi') {
-          const optionsWrapper = document.createElement('div')
-          optionsWrapper.className = 'options-row'
-          const optionList = document.createElement('div')
-          optionList.className = 'option-list'
+          const activeLanguages = getActiveLanguages(state.languages)
           const options = state.options
             .filter((option) => option.question_key === question.question_key)
             .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
+
+          // --- Option key management ---
+          const optionsWrapper = document.createElement('div')
+          optionsWrapper.className = 'options-section'
+          const optionsTitle = document.createElement('div')
+          optionsTitle.className = 'section-title'
+          optionsTitle.textContent = 'Options'
+          optionsWrapper.appendChild(optionsTitle)
+
+          const optionList = document.createElement('div')
+          optionList.className = 'option-list'
           options.forEach((option) => {
             const row = document.createElement('div')
             row.className = 'option-row'
@@ -188,51 +196,83 @@ export function createQuestionnaireRender({ state, views }) {
             dragHandle.className = 'option-drag'
             dragHandle.title = 'Drag to reorder'
             dragHandle.textContent = '⠿'
-            const optionKeyInput = createInput('text', option.option_key, true)
-            optionKeyInput.title = 'Option key (used in the API)'
-            const optionSortInput = createInput('number', option.sort ?? 0)
-            optionSortInput.dataset.field = 'option-sort'
-            optionSortInput.style.display = 'none'
-            const optionActiveInput = createCheckbox(Boolean(option.is_active))
-            optionActiveInput.dataset.field = 'option-active'
-            const optionLabelInput = createInput('text', getTranslation(option.translation_key || ''))
-            optionLabelInput.dataset.field = 'option-label'
+            const keySpan = document.createElement('span')
+            keySpan.className = 'option-key-label'
+            keySpan.textContent = option.option_key
+            keySpan.title = 'Option key (used in the API)'
+            const activeInput = createCheckbox(Boolean(option.is_active))
+            activeInput.dataset.field = 'option-active'
+            activeInput.title = 'Show this option to users'
+            activeInput.dataset.questionKey = question.question_key
+            activeInput.dataset.optionKey = option.option_key
+            const deleteButton = createButton('Delete', 'danger')
+            deleteButton.dataset.action = 'option-delete'
+            deleteButton.title = 'Delete this option'
             row.appendChild(dragHandle)
-            row.appendChild(createLabeled('Key', optionKeyInput))
-            optionActiveInput.title = 'Show this option to users'
-            optionLabelInput.title = 'Option label shown to users'
-            row.appendChild(createLabeled('Active', optionActiveInput))
-            row.appendChild(createLabeled('Label', optionLabelInput))
-
-            const saveOptionButton = createButton('Save')
-            saveOptionButton.dataset.action = 'option-save'
-            const deleteOptionButton = createButton('Delete', 'danger')
-            deleteOptionButton.dataset.action = 'option-delete'
-            row.appendChild(saveOptionButton)
-            row.appendChild(deleteOptionButton)
+            row.appendChild(keySpan)
+            row.appendChild(activeInput)
+            row.appendChild(deleteButton)
             optionList.appendChild(row)
           })
           optionsWrapper.appendChild(optionList)
-          body.appendChild(optionsWrapper)
 
           const addWrapper = document.createElement('div')
           addWrapper.className = 'option-add'
           addWrapper.dataset.questionKey = question.question_key
           const addKeyInput = createInput('text', '')
           addKeyInput.dataset.field = 'option-new-key'
-          addKeyInput.title = 'Option key (used in the API)'
-          const addSortInput = createInput('number', '0')
-          addSortInput.dataset.field = 'option-new-sort'
-          addSortInput.style.display = 'none'
-          const addLabelInput = createInput('text', '')
-          addLabelInput.dataset.field = 'option-new-label'
-          addLabelInput.title = 'Option label shown to users'
+          addKeyInput.placeholder = 'New option key'
+          addKeyInput.title = 'Unique key for this option'
           const addButton = createButton('Add option')
           addButton.dataset.action = 'option-add'
-          addWrapper.appendChild(createLabeled('Key', addKeyInput))
-          addWrapper.appendChild(createLabeled('Label', addLabelInput))
+          addWrapper.appendChild(addKeyInput)
           addWrapper.appendChild(addButton)
-          body.appendChild(addWrapper)
+          optionsWrapper.appendChild(addWrapper)
+          body.appendChild(optionsWrapper)
+
+          // --- Option translation table ---
+          if (options.length > 0 && activeLanguages.length > 0) {
+            const tableWrapper = document.createElement('div')
+            tableWrapper.className = 'option-translations-table'
+            const table = document.createElement('table')
+            const thead = document.createElement('thead')
+            const headerRow = document.createElement('tr')
+            const keyTh = document.createElement('th')
+            keyTh.textContent = 'Key'
+            headerRow.appendChild(keyTh)
+            activeLanguages.forEach((language) => {
+              const th = document.createElement('th')
+              th.textContent = `${language.label} (${language.lang})`
+              headerRow.appendChild(th)
+            })
+            thead.appendChild(headerRow)
+            table.appendChild(thead)
+            const tbody = document.createElement('tbody')
+            options.forEach((option) => {
+              const tr = document.createElement('tr')
+              tr.dataset.questionKey = question.question_key
+              tr.dataset.optionKey = option.option_key
+              const keyTd = document.createElement('td')
+              keyTd.className = 'option-key-cell'
+              keyTd.textContent = option.option_key
+              tr.appendChild(keyTd)
+              activeLanguages.forEach((language) => {
+                const td = document.createElement('td')
+                const translationKey = option.translation_key || `options.${question.question_key}.${option.option_key}`
+                const input = createInput('text', getTranslationFor(language.lang, translationKey))
+                input.dataset.field = 'option-translation'
+                input.dataset.lang = language.lang
+                input.dataset.translationKey = translationKey
+                input.title = `Label in ${language.label}`
+                td.appendChild(input)
+                tr.appendChild(td)
+              })
+              tbody.appendChild(tr)
+            })
+            table.appendChild(tbody)
+            tableWrapper.appendChild(table)
+            body.appendChild(tableWrapper)
+          }
         }
 
         wrapper.appendChild(body)

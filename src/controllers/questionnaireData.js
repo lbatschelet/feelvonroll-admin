@@ -44,25 +44,18 @@ export function createQuestionnaireData({ state, api }) {
 
   const loadTranslations = async () => {
     const activeLanguages = getActiveLanguages(state.languages)
-    const questionTranslationsByLang = {}
+    const allByLang = {}
     await Promise.all(
       activeLanguages.map(async (language) => {
-        questionTranslationsByLang[language.lang] = await api.fetchTranslations({
-          lang: language.lang,
-          prefix: 'questions.',
-        })
+        const [questionTranslations, optionTranslations] = await Promise.all([
+          api.fetchTranslations({ lang: language.lang, prefix: 'questions.' }),
+          api.fetchTranslations({ lang: language.lang, prefix: 'options.' }),
+        ])
+        allByLang[language.lang] = { ...questionTranslations, ...optionTranslations }
       })
     )
-    const optionTranslations = await api.fetchTranslations({
-      lang: state.selectedLanguage,
-      prefix: 'options.',
-    })
-    state.translationsByLang = questionTranslationsByLang
-    state.translations = mergeTranslations({
-      questionTranslationsByLang,
-      optionTranslations,
-      selectedLanguage: state.selectedLanguage,
-    })
+    state.translationsByLang = allByLang
+    state.translations = allByLang[state.selectedLanguage] || {}
     return state.translations
   }
 

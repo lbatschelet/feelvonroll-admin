@@ -14,11 +14,8 @@ export function createQuestionnaireView() {
         <button id="saveQuestionnaire" class="primary" title="Save all questionnaire changes">Save changes</button>
       </div>
     </div>
-    <div class="question-languages">
-      <label class="field">
-        <span>Editing language</span>
-        <select id="languageSelect" title="Language used for editing translations"></select>
-      </label>
+    <div class="question-languages" style="display:none">
+      <select id="languageSelect"></select>
     </div>
     <div id="questionsBody" class="questionnaire-body"></div>
     <div class="modal-backdrop" id="questionModal">

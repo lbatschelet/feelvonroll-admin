@@ -45,27 +45,22 @@ export function createQuestionnaireController({ state, views, api, shell, render
   }
 
 
-  const handleOptionSave = async (button) => {
-    const row = button.closest('.option-row')
-    if (!row) return
-    const question_key = row.dataset.questionKey
-    const option_key = row.dataset.optionKey
-    const sort = Number(row.querySelector('[data-field="option-sort"]')?.value || 0)
-    const is_active = Boolean(row.querySelector('[data-field="option-active"]')?.checked)
-    const label = row.querySelector('[data-field="option-label"]')?.value || ''
+  const handleOptionActiveToggle = async (questionKey, optionKey, isActive) => {
     const option = state.options.find(
-      (item) => item.question_key === question_key && item.option_key === option_key
+      (item) => item.question_key === questionKey && item.option_key === optionKey
     )
     if (!option) return
     try {
-      await actions.saveOption({
-        question_key,
-        option_key,
-        sort,
-        is_active,
+      await api.upsertOption({
+        token: state.token,
+        question_key: questionKey,
+        option_key: optionKey,
+        sort: option.sort,
+        is_active: isActive,
         translation_key: option.translation_key,
-        label,
       })
+      option.is_active = isActive ? 1 : 0
+      shell.setStatus(`Option ${isActive ? 'activated' : 'deactivated'}`, false)
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -94,25 +89,22 @@ export function createQuestionnaireController({ state, views, api, shell, render
     if (!wrapper) return
     const question_key = wrapper.dataset.questionKey
     const option_key = wrapper.querySelector('[data-field="option-new-key"]')?.value.trim()
-    const sort = Number(wrapper.querySelector('[data-field="option-new-sort"]')?.value || 0)
-    const label = wrapper.querySelector('[data-field="option-new-label"]')?.value || ''
     if (!option_key) {
       shell.setStatus('Option key is required', true)
       return
     }
+    const existingOptions = state.options.filter((o) => o.question_key === question_key)
+    const maxSort = Math.max(0, ...existingOptions.map((o) => Number(o.sort || 0)))
     try {
       await api.upsertOption({
         token: state.token,
         question_key,
         option_key,
-        sort,
+        sort: maxSort + 1,
         is_active: true,
         translation_key: `options.${question_key}.${option_key}`,
       })
-      await actions.saveTranslations({ [`options.${question_key}.${option_key}`]: label })
       wrapper.querySelector('[data-field="option-new-key"]').value = ''
-      wrapper.querySelector('[data-field="option-new-sort"]').value = ''
-      wrapper.querySelector('[data-field="option-new-label"]').value = ''
       await data.loadOptions()
       await data.loadTranslations()
       render.renderQuestionsList()
@@ -179,10 +171,6 @@ export function createQuestionnaireController({ state, views, api, shell, render
   }
 
   const bindEvents = () => {
-    views.questionnaireView.languageSelect.addEventListener('change', (event) => {
-      state.selectedLanguage = event.target.value
-      loadTranslations()
-    })
     views.questionnaireView.reloadQuestionnaireButton.addEventListener('click', () =>
       loadQuestionnaire()
     )
@@ -206,15 +194,21 @@ export function createQuestionnaireController({ state, views, api, shell, render
     views.questionnaireView.questionsBody.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-action]')
       if (!button) return
-      if (button.dataset.action === 'option-save') {
-        handleOptionSave(button)
-      }
       if (button.dataset.action === 'option-delete') {
         handleOptionDelete(button)
       }
       if (button.dataset.action === 'option-add') {
         handleOptionAdd(button)
       }
+    })
+
+    views.questionnaireView.questionsBody.addEventListener('change', (event) => {
+      const checkbox = event.target.closest('[data-field="option-active"]')
+      if (!checkbox) return
+      const questionKey = checkbox.dataset.questionKey
+      const optionKey = checkbox.dataset.optionKey
+      if (!questionKey || !optionKey) return
+      handleOptionActiveToggle(questionKey, optionKey, checkbox.checked)
     })
 
     views.questionnaireView.questionsBody.addEventListener('dragstart', (event) => {
