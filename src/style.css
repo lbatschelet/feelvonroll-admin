@@ -771,6 +771,42 @@ button.error {
   white-space: nowrap;
 }
 
+.note-cell {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.note-cell.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+.note-cell.clamped::after {
+  content: '...show more';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding-left: 20px;
+  background: linear-gradient(90deg, transparent, #fff 30%);
+  color: #2563eb;
+  font-size: 0.8rem;
+}
+.note-cell.expanded {
+  cursor: pointer;
+}
+.note-cell.expanded::after {
+  content: 'show less';
+  position: relative;
+  display: block;
+  text-align: right;
+  color: #2563eb;
+  font-size: 0.8rem;
+  background: none;
+  padding-left: 0;
+}
+
 .actions-cell button {
   vertical-align: middle;
 }

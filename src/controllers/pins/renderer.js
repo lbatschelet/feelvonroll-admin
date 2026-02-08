@@ -64,7 +64,7 @@ export function createPinsRenderer({ state, views, api, shell }) {
         <td>${formatPercent(pin.wellbeing)}</td>
         <td>${reasons}</td>
         <td>${groupLabel}</td>
-        <td>${escapeHtml(pin.note || '')}</td>
+        <td><div class="note-cell${(pin.note || '').length > 120 ? ' clamped' : ''}">${escapeHtml(pin.note || '')}</div></td>
         <td>${formatDate(pin.created_at)}</td>
         <td class="text-right">
           <button class="toggle ${getStatusClass(pin.approved)}" data-id="${pin.id}" title="Click to cycle status">
@@ -73,6 +73,13 @@ export function createPinsRenderer({ state, views, api, shell }) {
         </td>
       `
       pinsBody.appendChild(row)
+    })
+
+    pinsBody.querySelectorAll('.note-cell.clamped').forEach((cell) => {
+      cell.addEventListener('click', () => {
+        cell.classList.toggle('clamped')
+        cell.classList.toggle('expanded')
+      })
     })
 
     pinsBody.querySelectorAll('.toggle').forEach((button) => {

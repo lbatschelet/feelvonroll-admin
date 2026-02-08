@@ -27,8 +27,7 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
   }
 
   const setPage = (page) => {
-    if (page === state.page) return
-    const activeGuard = dirtyGuards.find((guard) => guard.isDirty())
+    const activeGuard = page !== state.page ? dirtyGuards.find((guard) => guard.isDirty()) : null
     if (activeGuard) {
       showUnsavedDialog({
         onSave: async () => {
