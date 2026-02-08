@@ -2,6 +2,7 @@
 
 Admin panel for the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project. Provides a web interface to manage pins, the questionnaire, translations, users, and languages.
 
+> [!NOTE]
 > Part of the feelvonRoll project. See the [main repository](https://github.com/lbatschelet/feelvonroll) for full documentation.
 
 ## Features
