@@ -1,0 +1,14 @@
+# SPA fallback: route all requests to index.html
+# so client-side routing (/reset, /dashboard, /pins, etc.) works.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # If the requested file or directory exists, serve it directly
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+
+  # Otherwise, fall back to index.html (let the SPA handle routing)
+  RewriteRule ^ index.html [L]
+</IfModule>
