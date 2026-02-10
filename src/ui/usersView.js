@@ -32,7 +32,6 @@ export function createUsersView() {
         <tbody id="usersBody"></tbody>
       </table>
     </div>
-    <div class="reset-link" id="resetLinkBox"></div>
   `
 
   return {
@@ -40,6 +39,5 @@ export function createUsersView() {
     reloadUsersButton: usersCard.querySelector('#reloadUsers'),
     addUserButton: usersCard.querySelector('#addUser'),
     usersBody: usersCard.querySelector('#usersBody'),
-    resetLinkBox: usersCard.querySelector('#resetLinkBox'),
   }
 }

@@ -2,6 +2,8 @@
  * Login card builder for admin authentication flows.
  * Exports: createLoginCard.
  */
+import { enablePasswordToggles } from '../utils/dom'
+
 export function createLoginCard() {
   const loginCard = document.createElement('section')
   loginCard.className = 'card login-card'
@@ -18,21 +20,7 @@ export function createLoginCard() {
       </div>
       <div class="form-actions">
         <button id="loginUserButton">Log in</button>
-        <button id="showSetPassword" class="ghost">Set password</button>
-      </div>
-    </div>
-    <div class="auth-section" data-section="set-password">
-      <div class="form-row">
-        <label>Reset token</label>
-        <input type="text" id="resetToken" placeholder="Token" title="Paste the reset token you received" />
-      </div>
-      <div class="form-row">
-        <label>New password</label>
-        <input type="password" id="resetPassword" placeholder="New password" />
-      </div>
-      <div class="form-actions">
-        <button id="setPasswordButton">Save password</button>
-        <button id="showLogin" class="ghost">Back</button>
+        <a href="/reset" class="ghost forgot-link">Forgot password?</a>
       </div>
     </div>
     <div class="auth-section" data-section="bootstrap">
@@ -63,16 +51,13 @@ export function createLoginCard() {
     </div>
   `
 
+  enablePasswordToggles(loginCard)
+
   return {
     element: loginCard,
     loginEmail: loginCard.querySelector('#loginEmail'),
     loginPassword: loginCard.querySelector('#loginPassword'),
     loginUserButton: loginCard.querySelector('#loginUserButton'),
-    showSetPasswordButton: loginCard.querySelector('#showSetPassword'),
-    showLoginButton: loginCard.querySelector('#showLogin'),
-    resetTokenInput: loginCard.querySelector('#resetToken'),
-    resetPasswordInput: loginCard.querySelector('#resetPassword'),
-    setPasswordButton: loginCard.querySelector('#setPasswordButton'),
     tokenInput: loginCard.querySelector('#adminToken'),
     bootstrapButton: loginCard.querySelector('#bootstrapButton'),
     bootstrapFirstName: loginCard.querySelector('#bootstrapFirstName'),

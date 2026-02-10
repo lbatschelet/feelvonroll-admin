@@ -1,6 +1,6 @@
 /**
  * Auth API client for admin authentication flows.
- * Exports: fetchAuthStatus, loginWithToken, loginUser, setPassword, refreshToken.
+ * Exports: fetchAuthStatus, loginWithToken, loginUser, setPassword, requestReset, refreshToken.
  */
 import { API_BASE, requestJson } from './baseClient'
 
@@ -24,11 +24,27 @@ export function loginUser({ email, password }) {
   })
 }
 
+export function validateToken({ reset_token }) {
+  return requestJson(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'validate_token', reset_token }),
+  })
+}
+
 export function setPassword({ reset_token, password }) {
   return requestJson(`${API_BASE}/admin_auth.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'set_password', reset_token, password }),
+  })
+}
+
+export function requestReset({ email }) {
+  return requestJson(`${API_BASE}/admin_auth.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'request_reset', email }),
   })
 }
 

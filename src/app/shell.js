@@ -1,11 +1,12 @@
 /**
  * App shell controls navigation, page visibility, and status banner.
+ * Delegates URL management to the router.
  * Exports: createShell.
  */
-export function createShell({ state, views, pageRegistry = null, onPageChange = null }) {
+export function createShell({ state, views, pageRegistry = null, router }) {
   const { header, loginCard, pages } = views
   const registry = pageRegistry || {}
-  let handlePageChange = onPageChange
+  let handlePageChange = null
   let dirtyGuards = []
 
   const registerDirtyGuard = (guard) => {
@@ -20,6 +21,7 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
     } else {
       state.page = page
     }
+    router.push(state.page)
     applyVisibility()
     if (handlePageChange) {
       handlePageChange(state.page)
@@ -47,7 +49,6 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
   const showUnsavedDialog = ({ onSave, onDiscard }) => {
     const dialog = views.unsavedDialog
     if (!dialog) {
-      // Fallback if dialog not available
       if (window.confirm('You have unsaved changes. Discard them?')) {
         onDiscard()
       }
@@ -141,6 +142,9 @@ export function createShell({ state, views, pageRegistry = null, onPageChange = 
     if (!header.userMenuButton) return
     header.userMenuButton.textContent = name || 'Profile'
   }
+
+  /* Listen for browser back/forward navigation */
+  router.listen((page) => setPage(page))
 
   return { setPage, applyVisibility, setStatus, setAuthSection, setOnPageChange, setUserDisplayName, registerDirtyGuard }
 }

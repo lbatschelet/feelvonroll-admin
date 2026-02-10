@@ -3,8 +3,9 @@
  * Exports: buildResetLink, copyResetLink.
  */
 export function buildResetLink(resetToken) {
-  const url = new URL(window.location.href)
-  url.searchParams.set('reset_token', resetToken)
+  const url = new URL(window.location.origin)
+  url.pathname = '/reset'
+  url.searchParams.set('token', resetToken)
   return url.toString()
 }
 

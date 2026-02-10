@@ -5,7 +5,7 @@
 import { runWithButtonFeedback } from '../../utils/buttonFeedback'
 import { buildResetLink, copyResetLink } from '../../utils/resetLink'
 
-export function createUsersActions({ state, views, api, shell, loader, renderer, modal, onLogout }) {
+export function createUsersActions({ state, views, api, shell, loader, renderer, modal, onLogout, resetDropdown }) {
   const {
     modalUserFirstName,
     modalUserLastName,
@@ -16,22 +16,68 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
     modalCreateUserButton,
   } = views.userModal
 
-  const handleReset = async (button) => {
+  /* ── Reset: send email (default action) ── */
+
+  const handleResetEmail = async (button) => {
     const id = Number(button.dataset.id)
     if (!id) return
+    const expiryHours = resetDropdown.getSelectedHours(id)
     button.disabled = true
+    const originalText = button.textContent
+    button.textContent = 'Sending...'
     try {
-      const result = await api.resetUserPassword({ token: state.token, id })
-      state.lastResetLink = buildResetLink(result.reset_token)
-      renderer.renderResetLink()
-      await copyResetLink(state.lastResetLink)
-      shell.setStatus(`Reset link copied for user ${id}`, false)
-    } catch (error) {
-      shell.setStatus(error.message, true)
-    } finally {
+      const result = await api.resetUserPasswordAndNotify({ token: state.token, id, expiry_hours: expiryHours })
+      const link = buildResetLink(result.reset_token)
+      state.lastResetLink = link
+      await copyResetLink(link)
+
+      if (result.email_sent) {
+        /* Success: just show checkmark on button, no popup */
+        button.textContent = '✓ Reset link sent'
+        button.disabled = true
+        setTimeout(() => {
+          button.textContent = originalText
+          button.disabled = false
+        }, 3000)
+        return
+      }
+
+      /* Email failed: show popup with link as fallback */
+      button.textContent = originalText
       button.disabled = false
+      modal.showResetResult({
+        link,
+        expiryHours,
+        message: 'Email could not be sent. Use the link below instead.',
+        isError: true,
+      })
+    } catch (error) {
+      button.textContent = originalText
+      button.disabled = false
+      shell.setStatus(error.message, true)
     }
   }
+
+  /* ── Reset: copy link (fallback from dropdown) ── */
+
+  const handleCopyLink = async (userId) => {
+    const expiryHours = resetDropdown.getSelectedHours(userId)
+    try {
+      const result = await api.resetUserPassword({ token: state.token, id: userId, expiry_hours: expiryHours })
+      const link = buildResetLink(result.reset_token)
+      state.lastResetLink = link
+      await copyResetLink(link)
+      modal.showResetResult({
+        link,
+        expiryHours,
+        message: 'Reset link generated and copied to clipboard.',
+      })
+    } catch (error) {
+      shell.setStatus(error.message, true)
+    }
+  }
+
+  /* ── Delete ── */
 
   const handleDelete = async (button) => {
     const id = Number(button.dataset.id)
@@ -55,6 +101,8 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
     }
   }
 
+  /* ── Create / Update via modal ── */
+
   const handleCreateOrUpdate = async () => {
     const first_name = modalUserFirstName.value.trim()
     const last_name = modalUserLastName.value.trim()
@@ -67,6 +115,8 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
     const password = modalUserPassword.value
     const passwordConfirm = modalUserPasswordConfirm.value
     const useReset = password.length === 0 && passwordConfirm.length === 0
+
+    /* ── Edit mode ── */
 
     if (state.editingUserId) {
       try {
@@ -90,6 +140,8 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
       return
     }
 
+    /* ── Create mode: password validation ── */
+
     if (!useReset) {
       if (!password || password.length < 8) {
         shell.setStatus('Password must be at least 8 characters', true)
@@ -101,6 +153,8 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
       }
     }
 
+    const expiryHours = modal.getSelectedExpiryHours()
+
     try {
       await runWithButtonFeedback(modalCreateUserButton, async () => {
         const result = await api.createUser({
@@ -110,22 +164,39 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
           email,
           password: useReset ? '' : password,
           is_admin,
+          expiry_hours: useReset ? expiryHours : undefined,
         })
 
-        modalUserFirstName.value = ''
-        modalUserLastName.value = ''
-        modalUserEmail.value = ''
-        modalUserPassword.value = ''
-        modalUserPasswordConfirm.value = ''
-        modalUserIsAdmin.checked = false
-        modal.renderModalResetLink('')
+        /* ── Created without password → show password link in modal ── */
 
         if (useReset && result.reset_token) {
-          state.lastResetLink = buildResetLink(result.reset_token)
-          renderer.renderResetLink()
-          modal.renderModalResetLink(state.lastResetLink)
-          await copyResetLink(state.lastResetLink)
+          const link = buildResetLink(result.reset_token)
+          state.lastResetLink = link
+          await copyResetLink(link)
+
+          modal.showResult({
+            link,
+            expiryHours,
+            onDismiss: () => {
+              if (state.bootstrapMode) {
+                state.bootstrapMode = false
+                state.bootstrapRequired = false
+                state.loggedIn = false
+                state.token = ''
+                localStorage.removeItem('admin_jwt')
+                shell.setStatus('User created. Reset link copied', false)
+                shell.setAuthSection('login')
+                shell.applyVisibility()
+              } else {
+                shell.setStatus('User created. Reset link copied', false)
+                loader.loadUsers().then(() => renderer.renderUsers())
+              }
+            },
+          })
+          return
         }
+
+        /* ── Created with password → close modal ── */
 
         modal.closeUserModal()
 
@@ -135,7 +206,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
           state.loggedIn = false
           state.token = ''
           localStorage.removeItem('admin_jwt')
-          shell.setStatus(useReset ? 'User created. Reset link copied' : 'User created. Password set', false)
+          shell.setStatus('User created. Password set', false)
           shell.setAuthSection('login')
           shell.applyVisibility()
           return
@@ -143,12 +214,12 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
 
         await loader.loadUsers()
         renderer.renderUsers()
-        shell.setStatus(useReset ? 'User created. Reset link copied' : 'User created. Password set', false)
+        shell.setStatus('User created. Password set', false)
       })
     } catch (error) {
       shell.setStatus(error.message, true)
     }
   }
 
-  return { handleReset, handleDelete, handleCreateOrUpdate }
+  return { handleResetEmail, handleCopyLink, handleDelete, handleCreateOrUpdate }
 }

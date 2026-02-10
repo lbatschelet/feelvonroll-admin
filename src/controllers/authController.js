@@ -1,36 +1,28 @@
 /**
- * Auth controller orchestrates login, bootstrap, reset, and refresh flows.
+ * Auth controller orchestrates login, bootstrap, and refresh flows.
  * Exports: createAuthController.
  */
 import { createTokenRefresh } from './auth/tokenRefresh'
 import { createBootstrapFlow } from './auth/bootstrapFlow'
-import { createPasswordResetFlow } from './auth/passwordReset'
 import { createAuthSession } from './auth/session'
 
-export function createAuthController({ state, views, api, shell, onOpenProfile }) {
+export function createAuthController({ state, views, api, shell, router, onOpenProfile }) {
   const tokenRefresh = createTokenRefresh({
     state,
     api,
     onLogout: () => authSession.handleLogout(),
   })
   const bootstrapFlow = createBootstrapFlow({ state, api, shell, views })
-  const passwordReset = createPasswordResetFlow({ api, shell, views })
-  const authSession = createAuthSession({ state, api, shell, views, tokenRefresh })
+  const authSession = createAuthSession({ state, api, shell, views, tokenRefresh, router })
 
   const bindEvents = () => {
     const {
       loginUserButton,
-      showSetPasswordButton,
-      showLoginButton,
-      setPasswordButton,
       bootstrapButton,
       bootstrapCreateUser,
     } = views.loginCard
 
     loginUserButton.addEventListener('click', () => authSession.handleLogin())
-    showSetPasswordButton.addEventListener('click', () => shell.setAuthSection('set-password'))
-    showLoginButton.addEventListener('click', () => shell.setAuthSection('login'))
-    setPasswordButton.addEventListener('click', () => passwordReset.handleSetPassword())
     bootstrapButton.addEventListener('click', () => bootstrapFlow.handleBootstrapLogin())
     bootstrapCreateUser.addEventListener('click', () => bootstrapFlow.handleBootstrapCreateUser())
 

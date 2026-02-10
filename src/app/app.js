@@ -3,6 +3,7 @@
  * Exports: initApp.
  */
 import { createShell } from './shell'
+import { createRouter } from './router'
 import * as api from '../adminApi'
 import { createAuthController } from '../controllers/authController'
 import { createPinsController } from '../controllers/pinsController'
@@ -62,6 +63,7 @@ export function initApp({ state, views }) {
     updateSelf: api.updateSelf,
     deleteUser: api.deleteUser,
     resetUserPassword: api.resetUserPassword,
+    resetUserPasswordAndNotify: api.resetUserPasswordAndNotify,
   }
   const auditApi = { fetchAuditLogs: api.fetchAuditLogs }
   const contentApi = {
@@ -71,13 +73,15 @@ export function initApp({ state, views }) {
   }
 
   const dashboardController = createDashboardController({ state, views })
-  const shell = createShell({ state, views, pageRegistry })
+  const router = createRouter()
+  const shell = createShell({ state, views, pageRegistry, router })
   let profileController = null
   const authController = createAuthController({
     state,
     views,
     api: authApi,
     shell,
+    router,
     onOpenProfile: () => profileController?.openProfileModal(),
   })
   profileController = createProfileController({

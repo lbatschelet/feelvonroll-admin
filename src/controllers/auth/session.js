@@ -2,8 +2,8 @@
  * Auth session flow for login/logout and initial auth checks.
  * Exports: createAuthSession.
  */
-export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
-  const { loginEmail, loginPassword, resetTokenInput, tokenInput } = views.loginCard
+export function createAuthSession({ state, api, shell, views, tokenRefresh, router }) {
+  const { loginEmail, loginPassword, tokenInput } = views.loginCard
   let loaders = {
     loadPins: async () => {},
     loadQuestionnaire: async () => {},
@@ -13,6 +13,10 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
 
   const setLoaders = (next) => {
     loaders = { ...loaders, ...next }
+  }
+
+  const revealApp = () => {
+    document.querySelector('#app').style.visibility = 'visible'
   }
 
   const handleLogin = async () => {
@@ -38,7 +42,7 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
         await loaders.loadUsers()
         await loaders.loadAuditLogs()
       }
-      shell.setPage('dashboard')
+      shell.setPage(router.currentPage() || 'dashboard')
       tokenRefresh.startTokenRefresh()
     } catch (error) {
       shell.setStatus(error.message, true)
@@ -58,6 +62,7 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
     localStorage.removeItem('admin_jwt')
     tokenRefresh.stopTokenRefresh()
     shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
+    router.replace('dashboard')
     shell.applyVisibility()
   }
 
@@ -69,19 +74,13 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
       state.bootstrapRequired = false
     }
 
-    const url = new URL(window.location.href)
-    const resetToken = url.searchParams.get('reset_token')
-    if (resetToken) {
-      resetTokenInput.value = resetToken
-      shell.setAuthSection('set-password')
-    }
-
     if (state.bootstrapRequired) {
       state.token = ''
       localStorage.removeItem('admin_jwt')
       state.loggedIn = false
       shell.setAuthSection('bootstrap')
       shell.applyVisibility()
+      revealApp()
       return
     }
 
@@ -101,8 +100,9 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
           await loaders.loadUsers()
           await loaders.loadAuditLogs()
         }
-        shell.setPage('dashboard')
+        shell.setPage(router.currentPage() || 'dashboard')
         tokenRefresh.startTokenRefresh()
+        revealApp()
         return
       } catch (error) {
         state.token = ''
@@ -111,10 +111,9 @@ export function createAuthSession({ state, api, shell, views, tokenRefresh }) {
     }
 
     state.loggedIn = false
-    if (!resetToken) {
-      shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
-    }
+    shell.setAuthSection(state.bootstrapRequired ? 'bootstrap' : 'login')
     shell.applyVisibility()
+    revealApp()
   }
 
   const init = () => {

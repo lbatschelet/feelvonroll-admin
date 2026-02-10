@@ -2,6 +2,8 @@
  * Profile modal builder for self profile edits.
  * Exports: createProfileModal.
  */
+import { enablePasswordToggles } from '../utils/dom'
+
 export function createProfileModal() {
   const profileModal = document.createElement('div')
   profileModal.className = 'modal-backdrop'
@@ -51,6 +53,8 @@ export function createProfileModal() {
       </div>
     </div>
   `
+
+  enablePasswordToggles(profileModal)
 
   return {
     element: profileModal,

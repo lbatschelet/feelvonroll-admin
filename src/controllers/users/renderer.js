@@ -1,39 +1,24 @@
 /**
- * Users renderer for table and reset-link display.
+ * Users renderer for table display.
  * Exports: createUsersRenderer.
  */
 import { escapeHtml, formatDate } from '../../utils/format'
-import { copyResetLink } from '../../utils/resetLink'
 import { icons } from '../../utils/dom'
 
-export function createUsersRenderer({ state, views, shell }) {
-  const { usersBody, resetLinkBox } = views.usersView
+const EXPIRY_OPTIONS = [
+  { hours: 1, label: '1 hour', short: '1h' },
+  { hours: 24, label: '24 hours', short: '24h' },
+  { hours: 168, label: '7 days', short: '7d' },
+  { hours: 720, label: '30 days', short: '30d' },
+]
 
-  const renderResetLink = () => {
-    if (!state.lastResetLink) {
-      resetLinkBox.innerHTML = ''
-      return
-    }
-    resetLinkBox.innerHTML = `
-      <div class="reset-link-box">
-        <div class="muted">Latest reset link (24h)</div>
-        <div class="reset-link-row">
-          <input type="text" value="${state.lastResetLink}" readonly />
-          <button id="copyResetLink" class="ghost" title="Copy reset link to clipboard">Copy</button>
-        </div>
-      </div>
-    `
-    const copyButton = resetLinkBox.querySelector('#copyResetLink')
-    copyButton.addEventListener('click', async () => {
-      await copyResetLink(state.lastResetLink)
-    })
-  }
+export function createUsersRenderer({ state, views, shell }) {
+  const { usersBody } = views.usersView
 
   const renderUsers = () => {
     usersBody.innerHTML = ''
     if (!state.users.length) {
       usersBody.innerHTML = '<tr><td colspan="8" class="empty">No users found</td></tr>'
-      renderResetLink()
       return
     }
     state.users.forEach((user) => {
@@ -50,14 +35,16 @@ export function createUsersRenderer({ state, views, shell }) {
         <td>${user.last_login_at ? formatDate(user.last_login_at) : '-'}</td>
         <td class="actions-cell">
           <button class="ghost" data-action="edit" data-id="${user.id}" title="Edit user details">Edit</button>
-          <button class="ghost" data-action="reset" data-id="${user.id}" title="Generate password reset link">Reset</button>
+          <div class="reset-split" data-id="${user.id}">
+            <button class="ghost" data-action="reset-email" data-id="${user.id}" title="Send password reset email">Reset</button>
+            <button class="ghost reset-caret" data-action="reset-menu" data-id="${user.id}" title="Reset options">▾</button>
+          </div>
           <button class="icon-btn danger" data-action="delete" data-id="${user.id}" title="Delete this user">${icons.trash}</button>
         </td>
       `
       usersBody.appendChild(row)
     })
-    renderResetLink()
   }
 
-  return { renderUsers, renderResetLink }
+  return { renderUsers, EXPIRY_OPTIONS }
 }

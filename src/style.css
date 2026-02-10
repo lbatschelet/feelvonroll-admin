@@ -209,6 +209,35 @@ h2 {
   justify-content: flex-start;
 }
 
+.reset-section .form-actions {
+  justify-content: flex-start;
+}
+
+.form-hint {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.form-hint a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.form-hint a:hover {
+  text-decoration: underline;
+}
+
+.forgot-link {
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+}
+
 .tools-card {
   display: none;
   margin-bottom: 12px;
@@ -435,7 +464,7 @@ button.error {
 
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 10px;
   margin-top: 12px;
 }
@@ -444,10 +473,254 @@ button.error {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+/* ── Advanced (collapsible password section) ── */
+
+.modal-advanced {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.modal-advanced summary {
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.modal-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.modal-advanced summary::before {
+  content: '▸';
+  font-size: 0.75rem;
+  transition: transform 0.15s;
+}
+
+.modal-advanced[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.modal-advanced[open] summary {
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-advanced .question-row {
+  padding: 10px 12px 0;
+}
+
+.modal-advanced .password-match {
+  padding: 0 12px 10px;
+}
+
+/* ── Password match indicator ── */
+
+.password-match {
+  font-size: 0.8rem;
+  min-height: 1.2em;
+  margin-top: 4px;
+}
+
+.password-match.is-ok {
+  color: #16a34a;
+}
+
+.password-match.is-error {
+  color: #dc2626;
+}
+
 .modal-hint {
   margin: 0 0 10px;
   font-size: 0.85rem;
   color: #475569;
+}
+
+.admin-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.admin-toggle-row input[type='checkbox'] {
+  margin: 0;
+}
+
+.admin-toggle-row strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.admin-toggle-hint {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* ── Split button ── */
+
+.split-btn {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 10px;
+  overflow: visible;
+  position: relative;
+}
+
+.split-btn > button:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.split-btn-caret {
+  border-radius: 0 10px 10px 0 !important;
+  padding: 10px 10px !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.split-btn-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  min-width: 140px;
+  z-index: 60;
+  padding: 6px;
+}
+
+.split-btn-menu.is-open {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.split-btn-menu button {
+  background: transparent;
+  color: #0f172a;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.split-btn-menu button:hover {
+  background: #f1f5f9;
+}
+
+.split-btn-menu button.is-active {
+  background: #e2e8f0;
+  font-weight: 600;
+}
+
+/* ── Modal result area ── */
+
+.modal-result-msg {
+  margin: 0 0 12px;
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.modal-result-msg.modal-result-error {
+  color: #dc2626;
+}
+
+/* ── Inline reset split button (user table) ── */
+
+.reset-split {
+  display: inline-flex;
+  align-items: stretch;
+  vertical-align: middle;
+}
+
+.reset-split > button:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.reset-caret {
+  border-radius: 0 10px 10px 0 !important;
+  padding: 10px 8px !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+  font-size: 0.75rem;
+  min-width: auto;
+}
+
+/* ── Floating reset dropdown (position: fixed to escape overflow) ── */
+
+.reset-dropdown-float {
+  display: none;
+  position: fixed;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.15);
+  min-width: 180px;
+  z-index: 100;
+  padding: 6px;
+}
+
+.reset-dropdown-float.is-open {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reset-dropdown-label {
+  padding: 4px 10px 2px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.reset-dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+.reset-dropdown-float button {
+  background: transparent;
+  color: #0f172a;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.reset-dropdown-float button:hover {
+  background: #f1f5f9;
+}
+
+.reset-dropdown-float button.is-active {
+  background: #e2e8f0;
+  font-weight: 600;
+}
+
+.reset-dropdown-fallback {
+  color: #64748b !important;
 }
 
 .checkbox-field {
@@ -1206,6 +1479,41 @@ th {
 
 .about-header-logos a:hover img {
   opacity: 1;
+}
+
+/* ── Password visibility toggle ── */
+
+.pw-wrap {
+  position: relative;
+  display: flex;
+}
+
+.pw-wrap input {
+  flex: 1;
+  padding-right: 36px;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #94a3b8;
+  font-size: 0;
+  line-height: 1;
+}
+
+.pw-toggle:hover {
+  color: #475569;
+}
+
+.pw-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 @media (max-width: 800px) {

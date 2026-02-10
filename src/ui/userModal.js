@@ -2,6 +2,8 @@
  * User modal builder for create/edit flows.
  * Exports: createUserModal.
  */
+import { enablePasswordToggles } from '../utils/dom'
+
 export function createUserModal() {
   const userModal = document.createElement('div')
   userModal.className = 'modal-backdrop'
@@ -12,60 +14,89 @@ export function createUserModal() {
         <button type="button" class="modal-close" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
-        <div class="question-row">
-          <label class="field">
-            <span>First name</span>
-            <input type="text" id="modalUserFirstName" placeholder="First name" autocomplete="given-name" />
-          </label>
-          <label class="field">
-            <span>Last name</span>
-            <input type="text" id="modalUserLastName" placeholder="Last name" autocomplete="family-name" />
-          </label>
+        <div id="modalFormArea">
+          <div class="question-row">
+            <label class="field">
+              <span>First name</span>
+              <input type="text" id="modalUserFirstName" placeholder="First name" autocomplete="given-name" />
+            </label>
+            <label class="field">
+              <span>Last name</span>
+              <input type="text" id="modalUserLastName" placeholder="Last name" autocomplete="family-name" />
+            </label>
+          </div>
+          <div class="question-row">
+            <label class="field">
+              <span>Email</span>
+              <input
+                type="email"
+                id="modalUserEmail"
+                placeholder="name@domain.ch"
+                autocomplete="email"
+              />
+            </label>
+          </div>
+          <details class="modal-advanced" id="modalAdvanced">
+            <summary>Set password manually</summary>
+            <div class="question-row modal-password">
+              <label class="field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  id="modalUserPassword"
+                  placeholder="Min. 8 characters"
+                  autocomplete="new-password"
+                />
+              </label>
+              <label class="field">
+                <span>Confirm password</span>
+                <input
+                  type="password"
+                  id="modalUserPasswordConfirm"
+                  placeholder="Confirm password"
+                  autocomplete="new-password"
+                />
+              </label>
+            </div>
+            <div id="modalPasswordMatch" class="password-match"></div>
+          </details>
+          <div class="admin-toggle">
+            <label class="admin-toggle-row">
+              <input type="checkbox" id="modalUserIsAdmin" />
+              <strong>Admin</strong>
+            </label>
+            <p class="admin-toggle-hint">Admins can manage users, configure the questionnaire, and view audit logs. Regular users can only review and moderate pins.</p>
+          </div>
         </div>
-        <div class="question-row">
-          <label class="field">
-            <span>Email</span>
-            <input
-              type="email"
-              id="modalUserEmail"
-              placeholder="name@domain.ch"
-              autocomplete="email"
-            />
-          </label>
+        <div id="modalResultArea" style="display: none;">
+          <p class="modal-result-msg">User created successfully. Share the password link below so they can set their password.</p>
+          <div class="reset-link-box">
+            <div class="muted" id="modalResultExpiryLabel">Password link (valid for 24 hours)</div>
+            <div class="reset-link-row">
+              <input type="text" id="modalResultLink" readonly />
+              <button type="button" id="modalCopyLink" class="ghost">Copy</button>
+            </div>
+          </div>
         </div>
-        <div class="question-row modal-password">
-          <label class="field">
-            <span>Password</span>
-            <input
-              type="password"
-              id="modalUserPassword"
-              placeholder="Password"
-              autocomplete="new-password"
-            />
-          </label>
-          <label class="field">
-            <span>Confirm password</span>
-            <input
-              type="password"
-              id="modalUserPasswordConfirm"
-              placeholder="Confirm password"
-              autocomplete="new-password"
-            />
-          </label>
-        </div>
-        <p class="modal-hint">Leave password empty to generate a reset link.</p>
-        <label class="field checkbox-field">
-          <input type="checkbox" id="modalUserIsAdmin" title="Admins can manage users and audit logs" />
-          <span>Admin</span>
-        </label>
-        <div class="reset-link" id="modalResetLink"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="ghost" id="modalCancel">Cancel</button>
-        <button type="button" id="modalCreateUser">Create user</button>
+        <div class="split-btn" id="modalSplitBtn">
+          <button type="button" id="modalCreateUser">Create password link</button>
+          <button type="button" class="split-btn-caret" id="modalExpiryToggle" title="Token validity period">24h ▾</button>
+          <div class="split-btn-menu" id="modalExpiryMenu">
+            <button type="button" data-hours="1">1 hour</button>
+            <button type="button" data-hours="24" class="is-active">24 hours</button>
+            <button type="button" data-hours="168">7 days</button>
+            <button type="button" data-hours="720">30 days</button>
+          </div>
+        </div>
+        <button type="button" id="modalDone" style="display: none;">Done</button>
       </div>
     </div>
   `
+
+  enablePasswordToggles(userModal)
 
   return {
     element: userModal,
@@ -79,6 +110,16 @@ export function createUserModal() {
     modalUserIsAdmin: userModal.querySelector('#modalUserIsAdmin'),
     modalUserPassword: userModal.querySelector('#modalUserPassword'),
     modalUserPasswordConfirm: userModal.querySelector('#modalUserPasswordConfirm'),
-    modalResetLink: userModal.querySelector('#modalResetLink'),
+    modalAdvanced: userModal.querySelector('#modalAdvanced'),
+    modalPasswordMatch: userModal.querySelector('#modalPasswordMatch'),
+    modalFormArea: userModal.querySelector('#modalFormArea'),
+    modalResultArea: userModal.querySelector('#modalResultArea'),
+    modalResultLink: userModal.querySelector('#modalResultLink'),
+    modalResultExpiryLabel: userModal.querySelector('#modalResultExpiryLabel'),
+    modalCopyLink: userModal.querySelector('#modalCopyLink'),
+    modalSplitBtn: userModal.querySelector('#modalSplitBtn'),
+    modalExpiryToggle: userModal.querySelector('#modalExpiryToggle'),
+    modalExpiryMenu: userModal.querySelector('#modalExpiryMenu'),
+    modalDone: userModal.querySelector('#modalDone'),
   }
 }
