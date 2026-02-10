@@ -30,22 +30,25 @@ export function createProfileModal() {
             <input type="email" id="profileEmail" autocomplete="email" />
           </label>
         </div>
-        <div class="question-row">
-          <label class="field">
-            <span>Current password</span>
-            <input type="password" id="profileCurrentPassword" autocomplete="current-password" title="Required to save profile changes" />
-          </label>
-        </div>
-        <div class="question-row modal-password">
-          <label class="field">
-            <span>New password</span>
-            <input type="password" id="profileNewPassword" autocomplete="new-password" />
-          </label>
-          <label class="field">
-            <span>Confirm new password</span>
-            <input type="password" id="profileNewPasswordConfirm" autocomplete="new-password" />
-          </label>
-        </div>
+        <details class="modal-advanced" id="profilePasswordSection">
+          <summary>Change password</summary>
+          <div class="question-row">
+            <label class="field">
+              <span>Current password</span>
+              <input type="password" id="profileCurrentPassword" autocomplete="current-password" title="Required when changing password" />
+            </label>
+          </div>
+          <div class="question-row modal-password">
+            <label class="field">
+              <span>New password</span>
+              <input type="password" id="profileNewPassword" autocomplete="new-password" />
+            </label>
+            <label class="field">
+              <span>Confirm new password</span>
+              <input type="password" id="profileNewPasswordConfirm" autocomplete="new-password" />
+            </label>
+          </div>
+        </details>
       </div>
       <div class="modal-actions">
         <button type="button" class="ghost" id="profileCancel">Cancel</button>

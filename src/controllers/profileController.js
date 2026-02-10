@@ -44,15 +44,16 @@ export function createProfileController({ state, views, api, shell, onLogout }) 
       shell.setStatus('First name and email are required', true)
       return
     }
-    if (!current_password) {
-      shell.setStatus('Current password is required', true)
+    const wantsPasswordChange = new_password || new_password_confirm
+    if (wantsPasswordChange && !current_password) {
+      shell.setStatus('Current password is required to change password', true)
       return
     }
-    if ((new_password || new_password_confirm) && new_password !== new_password_confirm) {
+    if (wantsPasswordChange && new_password !== new_password_confirm) {
       shell.setStatus('New passwords do not match', true)
       return
     }
-    if (new_password && new_password.length < 8) {
+    if (wantsPasswordChange && new_password.length < 8) {
       shell.setStatus('New password must be at least 8 characters', true)
       return
     }
