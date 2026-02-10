@@ -20,7 +20,7 @@ export function createLoginCard() {
       </div>
       <div class="form-actions">
         <button id="loginUserButton">Log in</button>
-        <a href="/reset" class="ghost forgot-link">Forgot password?</a>
+        <a href="/reset" class="forgot-link">Forgot password?</a>
       </div>
     </div>
     <div class="auth-section" data-section="bootstrap">

@@ -231,11 +231,17 @@ h2 {
 
 .forgot-link {
   text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #64748b;
   display: inline-flex;
   align-items: center;
-  padding: 10px 14px;
+  padding: 10px 0;
+}
+
+.forgot-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 .tools-card {
