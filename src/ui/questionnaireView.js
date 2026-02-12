@@ -1,5 +1,6 @@
 /**
  * Questionnaire view builder for question editor UI.
+ * Uses a card/tile grid for questions and a modal for editing.
  * Exports: createQuestionnaireView.
  */
 import { icons } from '../utils/dom'
@@ -9,22 +10,21 @@ export function createQuestionnaireView() {
   questionnaireCard.className = 'card questionnaire-card'
   questionnaireCard.innerHTML = `
     <div class="card-header">
-      <h2>Questionnaire</h2>
+      <h2>Questions</h2>
       <div class="header-actions">
         <button id="reloadQuestionnaire" class="icon-btn-ghost" title="Reload questionnaire data">${icons.reload}</button>
-        <button id="openQuestionModal" class="ghost">New question</button>
         <button id="saveQuestionnaire" class="primary" title="Save all questionnaire changes">Save changes</button>
       </div>
     </div>
     <div class="question-languages" style="display:none">
       <select id="languageSelect"></select>
     </div>
-    <div id="questionsBody" class="questionnaire-body"></div>
+    <div id="questionsBody" class="questions-grid"></div>
     <div class="modal-backdrop" id="questionModal">
-      <div class="modal">
+      <div class="modal modal-wide">
         <div class="modal-header">
-          <h3>New question</h3>
-          <button class="modal-close" id="closeQuestionModal" type="button">×</button>
+          <h3 id="questionModalTitle">New question</h3>
+          <button class="modal-close" id="closeQuestionModal" type="button">&times;</button>
         </div>
         <div class="question-row">
           <label class="field">
@@ -87,7 +87,10 @@ export function createQuestionnaireView() {
             <input type="number" id="newQuestionRows" value="3" title="Height of the text field" />
           </label>
         </div>
+        <div id="questionModalOptions"></div>
         <div class="modal-actions">
+          <button class="icon-btn danger" id="deleteQuestion" type="button" title="Delete this question" style="display:none">${icons.trash}</button>
+          <span class="modal-actions-spacer"></span>
           <button class="ghost" id="cancelQuestionModal" type="button">Cancel</button>
           <button id="addQuestion" class="primary" type="button">Add question</button>
         </div>
@@ -99,8 +102,8 @@ export function createQuestionnaireView() {
     element: questionnaireCard,
     reloadQuestionnaireButton: questionnaireCard.querySelector('#reloadQuestionnaire'),
     saveQuestionnaireButton: questionnaireCard.querySelector('#saveQuestionnaire'),
-    openQuestionModalButton: questionnaireCard.querySelector('#openQuestionModal'),
     questionModal: questionnaireCard.querySelector('#questionModal'),
+    questionModalTitle: questionnaireCard.querySelector('#questionModalTitle'),
     closeQuestionModalButton: questionnaireCard.querySelector('#closeQuestionModal'),
     cancelQuestionModalButton: questionnaireCard.querySelector('#cancelQuestionModal'),
     languageSelect: questionnaireCard.querySelector('#languageSelect'),
@@ -118,5 +121,7 @@ export function createQuestionnaireView() {
     newQuestionSingleChoice: questionnaireCard.querySelector('#newQuestionSingleChoice'),
     newQuestionRows: questionnaireCard.querySelector('#newQuestionRows'),
     addQuestionButton: questionnaireCard.querySelector('#addQuestion'),
+    deleteQuestionButton: questionnaireCard.querySelector('#deleteQuestion'),
+    questionModalOptions: questionnaireCard.querySelector('#questionModalOptions'),
   }
 }

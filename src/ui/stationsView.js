@@ -21,7 +21,7 @@ export function createStationsView() {
             <th>Floor</th>
             <th>Questionnaire</th>
             <th>Active</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="stationsTableBody"></tbody>

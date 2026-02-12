@@ -21,7 +21,7 @@ export function createQuestionnairesView() {
             <th>Slots</th>
             <th>Default</th>
             <th>Active</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="questionnairesTableBody"></tbody>

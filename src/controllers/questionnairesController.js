@@ -1,7 +1,9 @@
 /**
  * Questionnaires controller (admin: CRUD for questionnaires and slots).
+ * Slots support drag-and-drop reordering and a search-dropdown for question selection.
  * Exports: createQuestionnairesController.
  */
+import { icons } from '../utils/dom'
 
 export function createQuestionnairesController({ state, views, api, shell, questionsApi }) {
   const view = views.questionnairesView
@@ -48,9 +50,9 @@ export function createQuestionnairesController({ state, views, api, shell, quest
         <td>${q.slot_count || 0}</td>
         <td>${parseInt(q.is_default) ? 'Yes' : ''}</td>
         <td>${parseInt(q.is_active) ? 'Yes' : 'No'}</td>
-        <td>
-          <button class="button ghost small" data-edit="${q.id}">Edit</button>
-          ${parseInt(q.is_default) ? '' : `<button class="button ghost small danger" data-delete="${q.id}">Delete</button>`}
+        <td class="actions-cell">
+          <button class="icon-btn-ghost" data-edit="${q.id}" title="Edit questionnaire">${icons.pencil}</button>
+          ${parseInt(q.is_default) ? '' : `<button class="icon-btn danger" data-delete="${q.id}" title="Delete questionnaire">${icons.trash}</button>`}
         </td>
       `
       view.tableBody.appendChild(tr)
@@ -83,34 +85,38 @@ export function createQuestionnairesController({ state, views, api, shell, quest
 
   // ── Slots rendering ────────────────────────────────────────────
 
-  let currentSlots = []
-
   const loadSlotsForQuestionnaire = async (qid) => {
-    // We need to get slot details -- for now derive from questionnaires data
-    // The admin endpoint could return slots; for now we'll use a simpler approach
-    // by loading the questionnaire detail. For MVP, start with empty and let user rebuild.
     // TODO: Add a detail endpoint that returns slots
     renderSlots([])
   }
 
   const renderSlots = (slots) => {
-    currentSlots = slots
     view.slotsContainer.innerHTML = ''
     slots.forEach((slot, index) => renderSlotRow(slot, index))
+  }
+
+  const getQuestionLabel = (key) => {
+    const lang = state.selectedLanguage || 'de'
+    const tKey = `questions.${key}.label`
+    return state.translationsByLang?.[lang]?.[tKey] || key
   }
 
   const renderSlotRow = (slot, index) => {
     const row = document.createElement('div')
     row.className = 'slot-row'
     row.dataset.index = index
+    row.draggable = false
 
-    const questionCheckboxes = availableQuestions.map((q) => {
-      const checked = (slot.questions || []).includes(q.question_key) ? 'checked' : ''
-      return `<label class="slot-question-label"><input type="checkbox" value="${esc(q.question_key)}" ${checked} /> ${esc(q.question_key)}</label>`
-    }).join('')
+    const selectedQuestions = slot.questions || []
+
+    // Build chips HTML
+    const chipsHtml = selectedQuestions.map((key) =>
+      `<span class="chip" data-key="${esc(key)}">${esc(getQuestionLabel(key))} <button type="button" class="chip-remove" data-remove="${esc(key)}">&times;</button></span>`
+    ).join('')
 
     row.innerHTML = `
       <div class="slot-header">
+        <span class="slot-drag" title="Drag to reorder">⠿</span>
         <strong>Slot ${index + 1}</strong>
         <select class="slot-mode">
           <option value="fixed" ${slot.mode === 'fixed' ? 'selected' : ''}>Fixed</option>
@@ -120,15 +126,18 @@ export function createQuestionnairesController({ state, views, api, shell, quest
           Pick <input type="number" min="1" value="${slot.pool_count || 1}" class="slot-count-input" style="width:3rem" />
         </label>
         <label class="checkbox-label"><input type="checkbox" class="slot-required" ${slot.required ? 'checked' : ''} /> Required</label>
-        <input type="number" class="slot-sort" value="${slot.sort ?? (index + 1) * 10}" style="width:4rem" title="Sort order" />
-        <button class="button ghost small danger slot-remove" type="button">Remove</button>
+        <button class="icon-btn danger slot-remove" type="button" title="Remove slot">${icons.trash}</button>
       </div>
       <div class="slot-questions">
-        ${questionCheckboxes || '<em style="color:#94a3b8;">No questions in library</em>'}
+        <div class="chip-list">${chipsHtml}</div>
+        <div class="search-dropdown-wrap">
+          <input type="text" class="search-dropdown-input" placeholder="Search and add question..." />
+          <div class="search-dropdown-menu" style="display:none"></div>
+        </div>
       </div>
     `
 
-    // Toggle pool count visibility
+    // Mode toggle
     const modeSelect = row.querySelector('.slot-mode')
     const poolCountLabel = row.querySelector('.slot-pool-count')
     modeSelect.addEventListener('change', () => {
@@ -136,11 +145,85 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     })
 
     // Remove slot
-    row.querySelector('.slot-remove').addEventListener('click', () => {
-      row.remove()
+    row.querySelector('.slot-remove').addEventListener('click', () => row.remove())
+
+    // Drag handle
+    const dragHandle = row.querySelector('.slot-drag')
+    dragHandle.addEventListener('mousedown', () => { row.draggable = true })
+    dragHandle.addEventListener('mouseup', () => { row.draggable = false })
+
+    // Chip remove
+    row.querySelector('.chip-list').addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.chip-remove')
+      if (!removeBtn) return
+      const key = removeBtn.dataset.remove
+      removeBtn.closest('.chip').remove()
     })
 
+    // Search dropdown
+    setupSearchDropdown(row)
+
     view.slotsContainer.appendChild(row)
+  }
+
+  const setupSearchDropdown = (row) => {
+    const input = row.querySelector('.search-dropdown-input')
+    const menu = row.querySelector('.search-dropdown-menu')
+    const chipList = row.querySelector('.chip-list')
+
+    const getSelectedKeys = () => {
+      return Array.from(chipList.querySelectorAll('.chip')).map((c) => c.dataset.key)
+    }
+
+    const renderMenu = (filter) => {
+      const selected = new Set(getSelectedKeys())
+      const filtered = availableQuestions.filter((q) => {
+        if (selected.has(q.question_key)) return false
+        if (!filter) return true
+        const label = getQuestionLabel(q.question_key).toLowerCase()
+        return label.includes(filter) || q.question_key.toLowerCase().includes(filter)
+      })
+      menu.innerHTML = ''
+      if (filtered.length === 0) {
+        menu.innerHTML = '<div class="search-dropdown-empty">No matching questions</div>'
+        menu.style.display = ''
+        return
+      }
+      filtered.forEach((q) => {
+        const item = document.createElement('button')
+        item.type = 'button'
+        item.className = 'search-dropdown-item'
+        item.dataset.key = q.question_key
+        item.textContent = `${getQuestionLabel(q.question_key)} (${q.question_key})`
+        menu.appendChild(item)
+      })
+      menu.style.display = ''
+    }
+
+    input.addEventListener('focus', () => renderMenu(input.value.trim().toLowerCase()))
+    input.addEventListener('input', () => renderMenu(input.value.trim().toLowerCase()))
+
+    menu.addEventListener('click', (e) => {
+      const item = e.target.closest('.search-dropdown-item')
+      if (!item) return
+      const key = item.dataset.key
+      // Add chip
+      const chip = document.createElement('span')
+      chip.className = 'chip'
+      chip.dataset.key = key
+      chip.innerHTML = `${esc(getQuestionLabel(key))} <button type="button" class="chip-remove" data-remove="${esc(key)}">&times;</button>`
+      chip.querySelector('.chip-remove').addEventListener('click', () => chip.remove())
+      chipList.appendChild(chip)
+      input.value = ''
+      menu.style.display = 'none'
+    })
+
+    // Close menu on outside click
+    document.addEventListener('click', (e) => {
+      if (!row.querySelector('.search-dropdown-wrap').contains(e.target)) {
+        menu.style.display = 'none'
+      }
+    })
   }
 
   const addSlot = () => {
@@ -153,13 +236,12 @@ export function createQuestionnairesController({ state, views, api, shell, quest
 
   const collectSlots = () => {
     const rows = view.slotsContainer.querySelectorAll('.slot-row')
-    return Array.from(rows).map((row) => {
+    return Array.from(rows).map((row, index) => {
       const mode = row.querySelector('.slot-mode').value
       const poolCount = parseInt(row.querySelector('.slot-count-input')?.value || '1')
       const required = row.querySelector('.slot-required').checked
-      const sort = parseInt(row.querySelector('.slot-sort').value || '0')
-      const checkboxes = row.querySelectorAll('.slot-questions input[type="checkbox"]:checked')
-      const questions = Array.from(checkboxes).map((cb) => cb.value)
+      const sort = (index + 1) * 10
+      const questions = Array.from(row.querySelectorAll('.chip')).map((c) => c.dataset.key)
       return { mode, pool_count: poolCount, required, sort, questions }
     })
   }
@@ -214,6 +296,56 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     }
   }
 
+  // ── Slot drag-and-drop ─────────────────────────────────────────
+
+  let draggingSlot = null
+
+  const bindSlotDragEvents = () => {
+    const container = view.slotsContainer
+
+    container.addEventListener('dragstart', (e) => {
+      const row = e.target.closest('.slot-row')
+      if (!row) return
+      draggingSlot = row
+      row.classList.add('dragging')
+    })
+
+    container.addEventListener('dragend', (e) => {
+      const row = e.target.closest('.slot-row')
+      if (row) {
+        row.classList.remove('dragging')
+        row.draggable = false
+      }
+      draggingSlot = null
+    })
+
+    container.addEventListener('dragover', (e) => {
+      const row = e.target.closest('.slot-row')
+      if (row && draggingSlot && row !== draggingSlot) {
+        e.preventDefault()
+        row.classList.add('drag-over')
+      }
+    })
+
+    container.addEventListener('dragleave', (e) => {
+      const row = e.target.closest('.slot-row')
+      if (row) row.classList.remove('drag-over')
+    })
+
+    container.addEventListener('drop', (e) => {
+      const row = e.target.closest('.slot-row')
+      if (!row || !draggingSlot || row === draggingSlot) return
+      e.preventDefault()
+      row.classList.remove('drag-over')
+      container.insertBefore(draggingSlot, row)
+      // Renumber slot headers
+      container.querySelectorAll('.slot-row').forEach((r, i) => {
+        const strong = r.querySelector('.slot-header strong')
+        if (strong) strong.textContent = `Slot ${i + 1}`
+      })
+    })
+  }
+
   // ── Events ─────────────────────────────────────────────────────
 
   const bindEvents = () => {
@@ -243,6 +375,8 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     view.saveBtn.addEventListener('click', handleSave)
     view.cancelBtn.addEventListener('click', closeEditForm)
     view.addSlotBtn.addEventListener('click', addSlot)
+
+    bindSlotDragEvents()
   }
 
   return { loadQuestionnaires, bindEvents }

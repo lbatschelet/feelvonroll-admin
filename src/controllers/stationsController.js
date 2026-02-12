@@ -2,6 +2,7 @@
  * Stations controller (admin: CRUD for QR-code stations + capture mode).
  * Exports: createStationsController.
  */
+import { icons } from '../utils/dom'
 
 export function createStationsController({ state, views, api, questionnairesApi, shell }) {
   const view = views.stationsView
@@ -44,9 +45,9 @@ export function createStationsController({ state, views, api, questionnairesApi,
         <td>${s.floor_index}</td>
         <td>${esc(s.questionnaire_name || '— Default —')}</td>
         <td>${parseInt(s.is_active) ? 'Yes' : 'No'}</td>
-        <td>
-          <button class="button ghost small" data-edit="${s.id}">Edit</button>
-          <button class="button ghost small danger" data-delete="${s.id}">Delete</button>
+        <td class="actions-cell">
+          <button class="icon-btn-ghost" data-edit="${s.id}" title="Edit station">${icons.pencil}</button>
+          <button class="icon-btn danger" data-delete="${s.id}" title="Delete station">${icons.trash}</button>
         </td>
       `
       view.tableBody.appendChild(tr)
