@@ -94,8 +94,19 @@ export function createQuestionnairesController({ state, views, api, shell, quest
   // ── Slots rendering ────────────────────────────────────────────
 
   const loadSlotsForQuestionnaire = async (qid) => {
-    // TODO: Add a detail endpoint that returns slots
-    renderSlots([])
+    try {
+      const detail = await api.fetchQuestionnaireDetail({ token: state.token, id: qid })
+      const slots = (detail.slots || []).map((s) => ({
+        mode: s.mode || 'fixed',
+        pool_count: s.pool_count || 1,
+        required: !!parseInt(s.required),
+        sort: parseInt(s.sort) || 0,
+        questions: s.questions || [],
+      }))
+      renderSlots(slots)
+    } catch {
+      renderSlots([])
+    }
   }
 
   const renderSlots = (slots) => {
@@ -291,19 +302,14 @@ export function createQuestionnairesController({ state, views, api, shell, quest
       return
     }
 
+    // Collect slots and include in the atomic save
+    data.slots = collectSlots()
+
     shell.setStatus('Saving...', false)
     try {
-      const result = await api.upsertQuestionnaire({ token: state.token, ...data })
-      const qid = result.id || id
-
-      // Save slots
-      const slots = collectSlots()
-      if (qid && slots.length > 0) {
-        await api.saveQuestionnaireSlots({ token: state.token, questionnaire_id: qid, slots })
-      }
-
+      await api.saveQuestionnaireFull({ token: state.token, ...data })
       shell.setStatus('Questionnaire saved', false)
-      closeModal()
+      closeEditModal()
       await loadQuestionnaires()
     } catch (error) {
       shell.setStatus(error.message, true)
