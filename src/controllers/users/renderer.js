@@ -34,11 +34,11 @@ export function createUsersRenderer({ state, views, shell }) {
         <td>${status}</td>
         <td>${user.last_login_at ? formatDate(user.last_login_at) : '-'}</td>
         <td class="actions-cell">
-          <button class="ghost" data-action="edit" data-id="${user.id}" title="Edit user details">Edit</button>
           <div class="reset-split" data-id="${user.id}">
             <button class="ghost" data-action="reset-email" data-id="${user.id}" title="Send password reset email">Reset</button>
             <button class="ghost reset-caret" data-action="reset-menu" data-id="${user.id}" title="Reset options">▾</button>
           </div>
+          <button class="icon-btn-ghost" data-action="edit" data-id="${user.id}" title="Edit user details">${icons.pencil}</button>
           <button class="icon-btn danger" data-action="delete" data-id="${user.id}" title="Delete this user">${icons.trash}</button>
         </td>
       `

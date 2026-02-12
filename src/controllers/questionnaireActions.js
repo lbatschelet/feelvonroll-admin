@@ -38,7 +38,7 @@ export function buildNewQuestion({ key, type, required, isActive, config, existi
 }
 
 export function createQuestionnaireActions({ state, views, api, shell, data, render, renderDashboard }) {
-  const { questionsBody, saveQuestionnaireButton, newQuestionTranslations } = views.questionnaireView
+  const { saveQuestionnaireButton, newQuestionTranslations } = views.questionnaireView
 
   const saveOptionOrder = async (questionKey, optionKeys) => {
     const updates = optionKeys.map((option_key, index) => {
@@ -62,37 +62,39 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
       if (index === -1) return option
       return { ...option, sort: index + 1 }
     })
-    render.renderQuestionsList()
     shell.setStatus('Options reordered', false)
   }
 
+  /**
+   * Saves all questions from state to the backend.
+   * Translations are read from state.translationsByLang / state.pendingTranslationsByLang.
+   */
   const saveQuestionnaire = async () => {
     const activeLanguages = state.languages
-    const blocks = Array.from(questionsBody.querySelectorAll('.question-block'))
+    const sorted = state.questions
+      .slice()
+      .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
+
     const payloads = []
 
-    for (const [index, block] of blocks.entries()) {
-      const key = block.dataset.key
-      const type = block.dataset.type
-      const required = block.querySelector('[data-field="required"]')?.checked || false
-      const isActive = block.querySelector('[data-field="is_active"]')?.checked || false
+    for (const [index, question] of sorted.entries()) {
+      const key = question.question_key
+      const type = question.type
       const sort = index + 1
-      const translationsByLang = {}
 
+      const translationsByLang = {}
       for (const language of activeLanguages) {
-        const label = block.querySelector(
-          `input[data-field="label"][data-lang="${language.lang}"]`
-        )?.value.trim()
+        const label =
+          state.pendingTranslationsByLang[language.lang]?.[`questions.${key}.label`] ??
+          state.translationsByLang[language.lang]?.[`questions.${key}.label`] ?? ''
         translationsByLang[language.lang] = { label }
         if (type === 'slider') {
-          const legendLow = block.querySelector(
-            `input[data-field="legend_low"][data-lang="${language.lang}"]`
-          )?.value.trim()
-          const legendHigh = block.querySelector(
-            `input[data-field="legend_high"][data-lang="${language.lang}"]`
-          )?.value.trim()
-          translationsByLang[language.lang].legend_low = legendLow
-          translationsByLang[language.lang].legend_high = legendHigh
+          translationsByLang[language.lang].legend_low =
+            state.pendingTranslationsByLang[language.lang]?.[`questions.${key}.legend_low`] ??
+            state.translationsByLang[language.lang]?.[`questions.${key}.legend_low`] ?? ''
+          translationsByLang[language.lang].legend_high =
+            state.pendingTranslationsByLang[language.lang]?.[`questions.${key}.legend_high`] ??
+            state.translationsByLang[language.lang]?.[`questions.${key}.legend_high`] ?? ''
         }
       }
 
@@ -106,43 +108,20 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
         return
       }
 
-      const config = buildQuestionConfig({
-        type,
-        values: {
-          min: block.querySelector('[data-field="min"]')?.value,
-          max: block.querySelector('[data-field="max"]')?.value,
-          step: block.querySelector('[data-field="step"]')?.value,
-          default: block.querySelector('[data-field="default"]')?.value,
-          use_for_color: block.querySelector('[data-field="use_for_color"]')?.checked,
-          rows: block.querySelector('[data-field="rows"]')?.value,
-          single_choice: block.querySelector('[data-field="single_choice"]')?.checked,
-        },
-      })
+      const config = question.config || {}
 
       payloads.push({
         question: {
           question_key: key,
           type,
-          required,
+          required: Boolean(question.required),
           sort,
-          is_active: isActive,
+          is_active: Boolean(question.is_active),
           config,
         },
         translationsByLang,
       })
     }
-
-    // Collect option translations from the table
-    const optionTranslations = []
-    const optionInputs = questionsBody.querySelectorAll('input[data-field="option-translation"]')
-    optionInputs.forEach((input) => {
-      const lang = input.dataset.lang
-      const translationKey = input.dataset.translationKey
-      const text = input.value.trim()
-      if (translationKey && lang) {
-        optionTranslations.push({ lang, translation_key: translationKey, text })
-      }
-    })
 
     try {
       await runWithButtonFeedback(saveQuestionnaireButton, async () => {
@@ -171,19 +150,14 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
             }
           }
         }
-        for (const entry of optionTranslations) {
-          await api.upsertTranslation({
-            token: state.token,
-            translation_key: entry.translation_key,
-            lang: entry.lang,
-            text: entry.text,
-          })
-        }
       })
     } catch (error) {
       shell.setStatus(error.message, true)
       return
     }
+
+    // Clear pending translations
+    state.pendingTranslationsByLang = {}
 
     await data.loadQuestions()
     await data.loadTranslations()
