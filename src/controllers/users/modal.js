@@ -221,9 +221,14 @@ export function createUserModalController({ state, views }) {
 
   /* ── Result display (after creating a user with password link) ── */
 
-  const showResult = ({ link, expiryHours, onDismiss }) => {
+  const showResult = ({ link, expiryHours, onDismiss, message = '', isError = false }) => {
     modalFormArea.style.display = 'none'
     modalResultArea.style.display = ''
+    const msgEl = modalResultArea.querySelector('.modal-result-msg')
+    if (msgEl) {
+      msgEl.textContent = message
+      msgEl.classList.toggle('modal-result-error', isError)
+    }
     modalResultLink.value = link
     modalResultExpiryLabel.textContent = `Password link (valid for ${getExpiryLabel(expiryHours)})`
     modalCancelButton.style.display = 'none'

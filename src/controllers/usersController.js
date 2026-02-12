@@ -74,5 +74,12 @@ export function createUsersController({ state, views, api, shell, onLogout }) {
     })
   }
 
-  return { bindEvents, loadUsers, renderUsers: renderer.renderUsers }
+  /** Auto-open create modal in bootstrap mode */
+  const onPageShow = () => {
+    if (state.bootstrapMode) {
+      modal.openUserModal()
+    }
+  }
+
+  return { bindEvents, loadUsers, renderUsers: renderer.renderUsers, onPageShow }
 }

@@ -121,13 +121,8 @@ export function createShell({ state, views, pageRegistry = null, router }) {
     const forceBootstrap = state.bootstrapRequired && !state.bootstrapMode
     loginCard.element.querySelectorAll('.auth-section').forEach((node) => {
       const isBootstrap = node.dataset.section === 'bootstrap'
-      const isBootstrapUser = node.dataset.section === 'bootstrap-user'
       if (forceBootstrap) {
         node.style.display = isBootstrap ? 'block' : 'none'
-        return
-      }
-      if (state.bootstrapMode && isBootstrapUser) {
-        node.style.display = 'block'
         return
       }
       node.style.display = node.dataset.section === section ? 'block' : 'none'

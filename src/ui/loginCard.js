@@ -32,23 +32,6 @@ export function createLoginCard() {
         <button id="bootstrapButton">Start setup</button>
       </div>
     </div>
-    <div class="auth-section" data-section="bootstrap-user">
-      <div class="form-row">
-        <label>First user (first name)</label>
-        <input type="text" id="bootstrapFirstName" placeholder="First name" />
-      </div>
-      <div class="form-row">
-        <label>First user (last name)</label>
-        <input type="text" id="bootstrapLastName" placeholder="Last name" />
-      </div>
-      <div class="form-row">
-        <label>First user (email)</label>
-        <input type="email" id="bootstrapEmail" placeholder="name@domain.ch" />
-      </div>
-      <div class="form-actions">
-        <button type="button" id="bootstrapCreateUser">Create user</button>
-      </div>
-    </div>
   `
 
   enablePasswordToggles(loginCard)
@@ -60,9 +43,5 @@ export function createLoginCard() {
     loginUserButton: loginCard.querySelector('#loginUserButton'),
     tokenInput: loginCard.querySelector('#adminToken'),
     bootstrapButton: loginCard.querySelector('#bootstrapButton'),
-    bootstrapFirstName: loginCard.querySelector('#bootstrapFirstName'),
-    bootstrapLastName: loginCard.querySelector('#bootstrapLastName'),
-    bootstrapEmail: loginCard.querySelector('#bootstrapEmail'),
-    bootstrapCreateUser: loginCard.querySelector('#bootstrapCreateUser'),
   }
 }

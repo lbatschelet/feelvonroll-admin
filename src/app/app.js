@@ -63,6 +63,7 @@ export function initApp({ state, views }) {
   const usersApi = {
     fetchUsers: api.fetchUsers,
     createUser: api.createUser,
+    createUserAndNotify: api.createUserAndNotify,
     updateUser: api.updateUser,
     updateSelf: api.updateSelf,
     deleteUser: api.deleteUser,
@@ -160,6 +161,9 @@ export function initApp({ state, views }) {
     const handler = pageHandlers[page]
     if (handler) {
       handler()
+    }
+    if (page === 'users') {
+      usersController.onPageShow()
     }
   })
 
