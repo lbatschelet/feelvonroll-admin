@@ -29,12 +29,11 @@ export function createUsersController({ state, views, api, shell, onLogout }) {
   }
 
   const bindEvents = () => {
-    const { reloadUsersButton, addUserButton, usersBody } = views.usersView
+    const { addUserButton, usersBody } = views.usersView
     const { modalCloseButton, modalCancelButton, modalCreateUserButton, modalDone } = views.userModal
 
     modal.bindModalEvents()
 
-    reloadUsersButton.addEventListener('click', () => loadUsers())
     addUserButton.addEventListener('click', () => modal.openUserModal())
     modalCloseButton.addEventListener('click', () => modal.closeUserModal())
     modalCancelButton.addEventListener('click', () => modal.closeUserModal())
@@ -42,34 +41,38 @@ export function createUsersController({ state, views, api, shell, onLogout }) {
     modalDone.addEventListener('click', () => modal.closeUserModal())
 
     usersBody.addEventListener('click', (event) => {
-      const button = event.target.closest('button[data-action]')
-      if (!button) return
-
-      const action = button.dataset.action
-
-      if (action === 'edit') {
-        const id = Number(button.dataset.id)
+      /* Edit button (from actionCell: data-edit="id") */
+      const editBtn = event.target.closest('button[data-edit]')
+      if (editBtn) {
+        const id = Number(editBtn.dataset.edit)
         const user = state.users.find((item) => Number(item.id) === id)
-        if (!user) return
-        modal.openUserModalForEdit(user)
+        if (user) modal.openUserModalForEdit(user)
+        return
       }
 
-      if (action === 'reset-email') {
-        actions.handleResetEmail(button)
+      /* Delete button (from actionCell: data-delete="id") */
+      const deleteBtn = event.target.closest('button[data-delete]')
+      if (deleteBtn) {
+        actions.handleDelete(deleteBtn)
+        return
       }
 
-      if (action === 'reset-menu') {
+      /* Reset split buttons (custom: data-action) */
+      const actionBtn = event.target.closest('button[data-action]')
+      if (!actionBtn) return
+
+      if (actionBtn.dataset.action === 'reset-email') {
+        actions.handleResetEmail(actionBtn)
+      }
+
+      if (actionBtn.dataset.action === 'reset-menu') {
         event.stopPropagation()
-        const userId = Number(button.dataset.id)
+        const userId = Number(actionBtn.dataset.id)
         if (resetDropdown.isOpen()) {
           resetDropdown.close()
         } else {
-          resetDropdown.open(button, userId)
+          resetDropdown.open(actionBtn, userId)
         }
-      }
-
-      if (action === 'delete') {
-        actions.handleDelete(button)
       }
     })
   }

@@ -9,15 +9,10 @@ export function createContentView() {
   element.className = 'card content-card'
   element.innerHTML = `
     <div class="card-header">
-      <div class="card-header-left">
-        <h2>Content Pages</h2>
-      </div>
+      <h2>Content Pages</h2>
       <div class="header-actions">
         <button id="contentReload" class="icon-btn-ghost" title="Reload content">${icons.reload}</button>
       </div>
-    </div>
-    <div class="content-page-tabs">
-      <button class="nav-button active" data-content-key="about">About</button>
     </div>
     <div id="contentEditors" class="content-editors"></div>
   `
@@ -25,7 +20,6 @@ export function createContentView() {
   return {
     element,
     reloadButton: element.querySelector('#contentReload'),
-    tabButtons: Array.from(element.querySelectorAll('[data-content-key]')),
     editorsContainer: element.querySelector('#contentEditors'),
   }
 }

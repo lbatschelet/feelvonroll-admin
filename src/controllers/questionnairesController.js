@@ -4,6 +4,8 @@
  * Exports: createQuestionnairesController.
  */
 import { icons } from '../utils/dom'
+import { showModal, hideModal, bindModalClose } from '../utils/adminModal'
+import { actionCell, checkTd, toggleTd } from '../utils/adminTable'
 
 export function createQuestionnairesController({ state, views, api, shell, questionsApi }) {
   const view = views.questionnairesView
@@ -44,32 +46,37 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     }
     questionnaires.forEach((q) => {
       const tr = document.createElement('tr')
+      const actions = [{ type: 'edit', id: q.id, title: 'Edit questionnaire' }]
+      if (!parseInt(q.is_default)) {
+        actions.push({ type: 'delete', id: q.id, title: 'Delete questionnaire' })
+      }
       tr.innerHTML = `
         <td><code>${esc(q.questionnaire_key)}</code></td>
         <td>${esc(q.name)}</td>
         <td>${q.slot_count || 0}</td>
-        <td>${parseInt(q.is_default) ? 'Yes' : ''}</td>
-        <td>${parseInt(q.is_active) ? 'Yes' : 'No'}</td>
-        <td class="actions-cell">
-          <button class="icon-btn-ghost" data-edit="${q.id}" title="Edit questionnaire">${icons.pencil}</button>
-          ${parseInt(q.is_default) ? '' : `<button class="icon-btn danger" data-delete="${q.id}" title="Delete questionnaire">${icons.trash}</button>`}
-        </td>
+        ${checkTd(parseInt(q.is_default))}
+        ${toggleTd(parseInt(q.is_active), 'active', q.id)}
+        ${actionCell(actions)}
       `
       view.tableBody.appendChild(tr)
     })
   }
 
-  // ── Render edit form ───────────────────────────────────────────
+  // ── Modal ──────────────────────────────────────────────────────
 
-  const openEditForm = (questionnaire = null) => {
-    view.editSection.style.display = ''
+  let editingQuestionnaire = null
+
+  const openEditModal = (questionnaire = null) => {
+    editingQuestionnaire = questionnaire
+    showModal(view.modal)
     view.editTitle.textContent = questionnaire ? 'Edit Questionnaire' : 'New Questionnaire'
+    view.deleteBtn.style.display = (questionnaire && !parseInt(questionnaire.is_default)) ? '' : 'none'
     view.idInput.value = questionnaire ? questionnaire.id : ''
     view.keyInput.value = questionnaire ? questionnaire.questionnaire_key : ''
+    view.keyInput.readOnly = questionnaire ? parseInt(questionnaire.is_default) : false
     view.nameInput.value = questionnaire ? questionnaire.name : ''
     view.descInput.value = questionnaire ? (questionnaire.description || '') : ''
     view.activeCheck.checked = questionnaire ? parseInt(questionnaire.is_active) : true
-    view.keyInput.disabled = questionnaire ? parseInt(questionnaire.is_default) : false
 
     if (questionnaire) {
       loadSlotsForQuestionnaire(parseInt(questionnaire.id))
@@ -78,9 +85,10 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     }
   }
 
-  const closeEditForm = () => {
-    view.editSection.style.display = 'none'
+  const closeEditModal = () => {
+    hideModal(view.modal)
     view.slotsContainer.innerHTML = ''
+    editingQuestionnaire = null
   }
 
   // ── Slots rendering ────────────────────────────────────────────
@@ -96,9 +104,13 @@ export function createQuestionnairesController({ state, views, api, shell, quest
   }
 
   const getQuestionLabel = (key) => {
-    const lang = state.selectedLanguage || 'de'
     const tKey = `questions.${key}.label`
-    return state.translationsByLang?.[lang]?.[tKey] || key
+    // Prefer English, fall back to any available language
+    if (state.translationsByLang?.['en']?.[tKey]) return state.translationsByLang['en'][tKey]
+    for (const lang of Object.keys(state.translationsByLang || {})) {
+      if (state.translationsByLang[lang][tKey]) return state.translationsByLang[lang][tKey]
+    }
+    return key
   }
 
   const renderSlotRow = (slot, index) => {
@@ -140,8 +152,17 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     // Mode toggle
     const modeSelect = row.querySelector('.slot-mode')
     const poolCountLabel = row.querySelector('.slot-pool-count')
+    const searchWrap = row.querySelector('.search-dropdown-wrap')
+
+    const updateFixedLimit = () => {
+      const isFixed = modeSelect.value === 'fixed'
+      const chipCount = row.querySelectorAll('.chip').length
+      searchWrap.style.display = (isFixed && chipCount >= 1) ? 'none' : ''
+    }
+
     modeSelect.addEventListener('change', () => {
       poolCountLabel.style.display = modeSelect.value === 'pool' ? '' : 'none'
+      updateFixedLimit()
     })
 
     // Remove slot
@@ -156,17 +177,20 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     row.querySelector('.chip-list').addEventListener('click', (e) => {
       const removeBtn = e.target.closest('.chip-remove')
       if (!removeBtn) return
-      const key = removeBtn.dataset.remove
       removeBtn.closest('.chip').remove()
+      updateFixedLimit()
     })
 
     // Search dropdown
-    setupSearchDropdown(row)
+    setupSearchDropdown(row, updateFixedLimit)
+
+    // Initial limit check
+    updateFixedLimit()
 
     view.slotsContainer.appendChild(row)
   }
 
-  const setupSearchDropdown = (row) => {
+  const setupSearchDropdown = (row, onChipChange) => {
     const input = row.querySelector('.search-dropdown-input')
     const menu = row.querySelector('.search-dropdown-menu')
     const chipList = row.querySelector('.chip-list')
@@ -212,10 +236,14 @@ export function createQuestionnairesController({ state, views, api, shell, quest
       chip.className = 'chip'
       chip.dataset.key = key
       chip.innerHTML = `${esc(getQuestionLabel(key))} <button type="button" class="chip-remove" data-remove="${esc(key)}">&times;</button>`
-      chip.querySelector('.chip-remove').addEventListener('click', () => chip.remove())
+      chip.querySelector('.chip-remove').addEventListener('click', () => {
+        chip.remove()
+        if (onChipChange) onChipChange()
+      })
       chipList.appendChild(chip)
       input.value = ''
       menu.style.display = 'none'
+      if (onChipChange) onChipChange()
     })
 
     // Close menu on outside click
@@ -275,7 +303,7 @@ export function createQuestionnairesController({ state, views, api, shell, quest
       }
 
       shell.setStatus('Questionnaire saved', false)
-      closeEditForm()
+      closeModal()
       await loadQuestionnaires()
     } catch (error) {
       shell.setStatus(error.message, true)
@@ -290,6 +318,7 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     try {
       await api.deleteQuestionnaire({ token: state.token, id })
       shell.setStatus('Deleted', false)
+      closeEditModal()
       await loadQuestionnaires()
     } catch (error) {
       shell.setStatus(error.message, true)
@@ -351,7 +380,30 @@ export function createQuestionnairesController({ state, views, api, shell, quest
   const bindEvents = () => {
     view.addBtn.addEventListener('click', async () => {
       await loadAvailableQuestions()
-      openEditForm(null)
+      openEditModal(null)
+    })
+
+    view.tableBody.addEventListener('change', async (e) => {
+      const toggle = e.target.closest('[data-toggle="active"]')
+      if (!toggle) return
+      const id = parseInt(toggle.dataset.id)
+      const q = questionnaires.find((q) => parseInt(q.id) === id)
+      if (!q) return
+      const newActive = toggle.checked
+      try {
+        await api.upsertQuestionnaire({
+          token: state.token,
+          id,
+          questionnaire_key: q.questionnaire_key,
+          name: q.name,
+          is_active: newActive,
+        })
+        q.is_active = newActive ? 1 : 0
+        shell.setStatus(`Questionnaire ${newActive ? 'activated' : 'deactivated'}`, false)
+      } catch (error) {
+        toggle.checked = !newActive
+        shell.setStatus(error.message, true)
+      }
     })
 
     view.tableBody.addEventListener('click', async (e) => {
@@ -361,7 +413,7 @@ export function createQuestionnairesController({ state, views, api, shell, quest
         const q = questionnaires.find((q) => parseInt(q.id) === id)
         if (q) {
           await loadAvailableQuestions()
-          openEditForm(q)
+          openEditModal(q)
         }
         return
       }
@@ -373,8 +425,13 @@ export function createQuestionnairesController({ state, views, api, shell, quest
     })
 
     view.saveBtn.addEventListener('click', handleSave)
-    view.cancelBtn.addEventListener('click', closeEditForm)
     view.addSlotBtn.addEventListener('click', addSlot)
+
+    view.deleteBtn.addEventListener('click', () => {
+      if (editingQuestionnaire) handleDelete(parseInt(editingQuestionnaire.id))
+    })
+
+    bindModalClose(view.modal, closeEditModal, [view.cancelBtn, view.closeModalBtn])
 
     bindSlotDragEvents()
   }

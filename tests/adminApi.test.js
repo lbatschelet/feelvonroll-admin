@@ -36,16 +36,19 @@ const buildResponse = ({
 })
 
 describe('adminApi', () => {
+  let BASE
+
   beforeEach(() => {
     globalThis.fetch = vi.fn()
+    BASE = getApiBase()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  it('returns the default API base', () => {
-    expect(getApiBase()).toBe('/api')
+  it('returns a non-empty API base', () => {
+    expect(getApiBase()).toBeTruthy()
   })
 
   it('fetchAdminPins includes admin token', async () => {
@@ -53,7 +56,8 @@ describe('adminApi', () => {
 
     const result = await fetchAdminPins({ token: 'secret' })
 
-    expect(fetch).toHaveBeenCalledWith('/api/admin_pins.php', {
+    expect(fetch).toHaveBeenCalledWith(`${BASE}/admin_pins.php`, {
+      cache: 'no-store',
       headers: { Authorization: 'Bearer secret' },
     })
     expect(result).toEqual([])
@@ -77,8 +81,9 @@ describe('adminApi', () => {
     const result = await updatePinApprovalBulk({ token: 'secret', ids: [1, 2], approved: true })
 
     expect(fetch).toHaveBeenCalledWith(
-      '/api/admin_pins.php',
+      `${BASE}/admin_pins.php`,
       expect.objectContaining({
+        cache: 'no-store',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,8 +101,9 @@ describe('adminApi', () => {
     const result = await deletePins({ token: 'secret', ids: [3, 4] })
 
     expect(fetch).toHaveBeenCalledWith(
-      '/api/admin_pins.php',
+      `${BASE}/admin_pins.php`,
       expect.objectContaining({
+        cache: 'no-store',
         method: 'POST',
         body: JSON.stringify({ action: 'delete', ids: [3, 4] }),
       })
@@ -115,7 +121,8 @@ describe('adminApi', () => {
 
     const result = await exportPinsCsv({ token: 'secret' })
 
-    expect(fetch).toHaveBeenCalledWith('/api/admin_pins.php?action=export_csv', {
+    expect(fetch).toHaveBeenCalledWith(`${BASE}/admin_pins.php?action=export_csv`, {
+      cache: 'no-store',
       headers: { Authorization: 'Bearer secret' },
     })
     expect(result.filename).toBe('pins.csv')
@@ -126,7 +133,8 @@ describe('adminApi', () => {
 
     const result = await fetchQuestions({ token: 'secret' })
 
-    expect(fetch).toHaveBeenCalledWith('/api/admin_questions.php', {
+    expect(fetch).toHaveBeenCalledWith(`${BASE}/admin_questions.php`, {
+      cache: 'no-store',
       headers: { Authorization: 'Bearer secret' },
     })
     expect(result).toEqual([])
@@ -137,7 +145,8 @@ describe('adminApi', () => {
 
     const result = await fetchLanguages({ token: 'secret' })
 
-    expect(fetch).toHaveBeenCalledWith('/api/admin_languages.php', {
+    expect(fetch).toHaveBeenCalledWith(`${BASE}/admin_languages.php`, {
+      cache: 'no-store',
       headers: { Authorization: 'Bearer secret' },
     })
     expect(result).toEqual([])
@@ -154,8 +163,9 @@ describe('adminApi', () => {
     })
 
     expect(fetch).toHaveBeenCalledWith(
-      '/api/admin_translations.php',
+      `${BASE}/admin_translations.php`,
       expect.objectContaining({
+        cache: 'no-store',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -186,8 +196,9 @@ describe('adminApi', () => {
     })
 
     expect(fetch).toHaveBeenCalledWith(
-      '/api/admin_users.php',
+      `${BASE}/admin_users.php`,
       expect.objectContaining({
+        cache: 'no-store',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

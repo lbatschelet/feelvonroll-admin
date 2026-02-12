@@ -3,7 +3,7 @@
  * Exports: createQuestionnaireActions, buildQuestionConfig, buildNewQuestion.
  */
 import { validateQuestionTranslations } from '../services/questionnaireService'
-import { runWithButtonFeedback } from '../utils/buttonFeedback'
+
 
 export function buildQuestionConfig({ type, values }) {
   const config = {}
@@ -38,7 +38,7 @@ export function buildNewQuestion({ key, type, required, isActive, config, existi
 }
 
 export function createQuestionnaireActions({ state, views, api, shell, data, render, renderDashboard }) {
-  const { saveQuestionnaireButton, newQuestionTranslations } = views.questionnaireView
+  const { newQuestionTranslations } = views.questionnaireView
 
   const saveOptionOrder = async (questionKey, optionKeys) => {
     const updates = optionKeys.map((option_key, index) => {
@@ -66,99 +66,46 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
   }
 
   /**
-   * Saves all questions from state to the backend.
-   * Translations are read from state.translationsByLang / state.pendingTranslationsByLang.
+   * Saves a single question + translations to the backend.
    */
-  const saveQuestionnaire = async () => {
-    const activeLanguages = state.languages
-    const sorted = state.questions
-      .slice()
-      .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
-
-    const payloads = []
-
-    for (const [index, question] of sorted.entries()) {
-      const key = question.question_key
-      const type = question.type
-      const sort = index + 1
-
-      const translationsByLang = {}
-      for (const language of activeLanguages) {
-        const label =
-          state.pendingTranslationsByLang[language.lang]?.[`questions.${key}.label`] ??
-          state.translationsByLang[language.lang]?.[`questions.${key}.label`] ?? ''
-        translationsByLang[language.lang] = { label }
-        if (type === 'slider') {
-          translationsByLang[language.lang].legend_low =
-            state.pendingTranslationsByLang[language.lang]?.[`questions.${key}.legend_low`] ??
-            state.translationsByLang[language.lang]?.[`questions.${key}.legend_low`] ?? ''
-          translationsByLang[language.lang].legend_high =
-            state.pendingTranslationsByLang[language.lang]?.[`questions.${key}.legend_high`] ??
-            state.translationsByLang[language.lang]?.[`questions.${key}.legend_high`] ?? ''
-        }
+  const saveSingleQuestion = async (question, translationsByLang) => {
+    await api.upsertQuestion({ token: state.token, question })
+    for (const [lang, translations] of Object.entries(translationsByLang)) {
+      await api.upsertTranslation({
+        token: state.token,
+        translation_key: `questions.${question.question_key}.label`,
+        lang,
+        text: translations.label,
+      })
+      if (question.type === 'slider') {
+        await api.upsertTranslation({
+          token: state.token,
+          translation_key: `questions.${question.question_key}.legend_low`,
+          lang,
+          text: translations.legend_low || '',
+        })
+        await api.upsertTranslation({
+          token: state.token,
+          translation_key: `questions.${question.question_key}.legend_high`,
+          lang,
+          text: translations.legend_high || '',
+        })
       }
-
-      const validation = validateQuestionTranslations({
-        type,
-        languages: activeLanguages,
-        valuesByLang: translationsByLang,
-      })
-      if (!validation.ok) {
-        shell.setStatus(`${validation.message} for ${key}`, true)
-        return
-      }
-
-      const config = question.config || {}
-
-      payloads.push({
-        question: {
-          question_key: key,
-          type,
-          required: Boolean(question.required),
-          sort,
-          is_active: Boolean(question.is_active),
-          config,
-        },
-        translationsByLang,
-      })
     }
+  }
 
-    try {
-      await runWithButtonFeedback(saveQuestionnaireButton, async () => {
-        for (const payload of payloads) {
-          await api.upsertQuestion({ token: state.token, question: payload.question })
-          for (const [lang, translations] of Object.entries(payload.translationsByLang)) {
-            await api.upsertTranslation({
-              token: state.token,
-              translation_key: `questions.${payload.question.question_key}.label`,
-              lang,
-              text: translations.label,
-            })
-            if (payload.question.type === 'slider') {
-              await api.upsertTranslation({
-                token: state.token,
-                translation_key: `questions.${payload.question.question_key}.legend_low`,
-                lang,
-                text: translations.legend_low || '',
-              })
-              await api.upsertTranslation({
-                token: state.token,
-                translation_key: `questions.${payload.question.question_key}.legend_high`,
-                lang,
-                text: translations.legend_high || '',
-              })
-            }
-          }
-        }
-      })
-    } catch (error) {
-      shell.setStatus(error.message, true)
-      return
-    }
+  /**
+   * Deletes a question from the backend.
+   */
+  const deleteQuestion = async (questionKey) => {
+    await api.deleteQuestion({ token: state.token, question_key: questionKey })
+  }
 
-    // Clear pending translations
+  /**
+   * Reload data from server and re-render.
+   */
+  const reloadAndRender = async () => {
     state.pendingTranslationsByLang = {}
-
     await data.loadQuestions()
     await data.loadTranslations()
     render.renderQuestionsList()
@@ -199,40 +146,6 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
     return translationsByLang
   }
 
-  const applyPendingTranslations = (questionKey, translationsByLang) => {
-    Object.entries(translationsByLang).forEach(([lang, entries]) => {
-      if (!state.pendingTranslationsByLang[lang]) {
-        state.pendingTranslationsByLang[lang] = {}
-      }
-      state.pendingTranslationsByLang[lang][`questions.${questionKey}.label`] = entries.label
-      if (entries.legend_low) {
-        state.pendingTranslationsByLang[lang][`questions.${questionKey}.legend_low`] = entries.legend_low
-      }
-      if (entries.legend_high) {
-        state.pendingTranslationsByLang[lang][`questions.${questionKey}.legend_high`] = entries.legend_high
-      }
-    })
-  }
-
-  const addQuestion = ({ key, type, required, isActive, configValues }) => {
-    const translationsByLang = collectNewQuestionTranslations(type)
-    if (!translationsByLang) return false
-
-    const config = buildQuestionConfig({ type, values: configValues })
-    const base = buildNewQuestion({
-      key,
-      type,
-      required,
-      isActive,
-      config,
-      existingQuestions: state.questions,
-    })
-
-    state.questions.push(base)
-    applyPendingTranslations(key, translationsByLang)
-    return true
-  }
-
   const resetNewQuestionForm = () => {
     const {
       newQuestionKey,
@@ -262,8 +175,10 @@ export function createQuestionnaireActions({ state, views, api, shell, data, ren
 
   return {
     saveOptionOrder,
-    saveQuestionnaire,
-    addQuestion,
+    saveSingleQuestion,
+    deleteQuestion,
+    reloadAndRender,
+    collectNewQuestionTranslations,
     resetNewQuestionForm,
   }
 }
