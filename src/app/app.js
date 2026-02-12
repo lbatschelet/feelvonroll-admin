@@ -14,12 +14,16 @@ import { createAuditController } from '../controllers/auditController'
 import { createContentController } from '../controllers/contentController'
 import { createDashboardController } from '../controllers/dashboardController'
 import { createProfileController } from '../controllers/profileController'
+import { createQuestionnairesController } from '../controllers/questionnairesController'
+import { createStationsController } from '../controllers/stationsController'
 
 export function initApp({ state, views }) {
   const pageRegistry = {
     dashboard: [views.dashboard.element],
     pins: [views.pinsView.toolsCard, views.pinsView.tableCard],
     questionnaire: [views.questionnaireView.element],
+    questionnaires: [views.questionnairesView.element],
+    stations: [views.stationsView.element],
     languages: [views.languagesView.element],
     users: [views.usersView.element],
     audit: [views.auditView.element],
@@ -70,6 +74,17 @@ export function initApp({ state, views }) {
     fetchContent: api.fetchContent,
     upsertContent: api.upsertContent,
     fetchLanguages: api.fetchLanguages,
+  }
+  const questionnairesApi = {
+    fetchQuestionnaires: api.fetchQuestionnaires,
+    upsertQuestionnaire: api.upsertQuestionnaire,
+    deleteQuestionnaire: api.deleteQuestionnaire,
+    saveQuestionnaireSlots: api.saveQuestionnaireSlots,
+  }
+  const stationsApi = {
+    fetchStations: api.fetchStations,
+    upsertStation: api.upsertStation,
+    deleteStation: api.deleteStation,
   }
 
   const dashboardController = createDashboardController({ state, views })
@@ -122,6 +137,13 @@ export function initApp({ state, views }) {
   })
   const auditController = createAuditController({ state, views, api: auditApi, shell })
   const contentController = createContentController({ state, views, api: contentApi, shell })
+  const questionnairesController = createQuestionnairesController({
+    state, views, api: questionnairesApi, shell,
+    questionsApi: questionnaireApi,
+  })
+  const stationsController = createStationsController({
+    state, views, api: stationsApi, questionnairesApi, shell,
+  })
 
   shell.registerDirtyGuard(questionnaireController.getDirtyGuard())
 
@@ -131,6 +153,8 @@ export function initApp({ state, views }) {
     audit: auditController.loadAuditLogs,
     languages: languagesController.loadLanguages,
     content: contentController.loadContent,
+    questionnaires: questionnairesController.loadQuestionnaires,
+    stations: stationsController.loadStations,
   }
   shell.setOnPageChange((page) => {
     const handler = pageHandlers[page]
@@ -154,6 +178,8 @@ export function initApp({ state, views }) {
   usersController.bindEvents()
   auditController.bindEvents()
   contentController.bindEvents()
+  questionnairesController.bindEvents()
+  stationsController.bindEvents()
 
   authController.init()
 }

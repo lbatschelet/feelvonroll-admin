@@ -63,6 +63,7 @@ export function createPinsView() {
             <th><input type="checkbox" id="selectAll" /></th>
             <th>ID</th>
             <th>Floor</th>
+            <th>Station</th>
             <th>Wellbeing</th>
             <th>Reasons</th>
             <th>Group</th>
