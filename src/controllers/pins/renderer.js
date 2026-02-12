@@ -5,6 +5,7 @@
 import { escapeHtml, formatDate, formatPercent } from '../../utils/format'
 import { getFilteredPins, paginatePins } from '../../services/pinsService'
 import { getStatusClass, getStatusLabel, getNextStatus } from './status'
+import { updatePagination, emptyRow } from '../../utils/adminTable'
 
 export function createPinsRenderer({ state, views, api, shell }) {
   const {
@@ -37,16 +38,18 @@ export function createPinsRenderer({ state, views, api, shell }) {
     state.pageIndex = page
     pinCount.textContent = String(total)
 
-    pageInfo.textContent = `Page ${page} of ${maxPage}`
-    firstPageButton.disabled = page <= 1
-    prevPageButton.disabled = page <= 1
-    nextPageButton.disabled = page >= maxPage
-    lastPageButton.disabled = page >= maxPage
+    updatePagination({
+      page,
+      maxPage,
+      pageInfo,
+      firstBtn: firstPageButton,
+      prevBtn: prevPageButton,
+      nextBtn: nextPageButton,
+      lastBtn: lastPageButton,
+    })
 
     if (!pagePins.length) {
-      const row = document.createElement('tr')
-      row.innerHTML = `<td colspan="9" class="empty">No pins found</td>`
-      pinsBody.appendChild(row)
+      pinsBody.innerHTML = emptyRow(10, 'No pins found')
       return
     }
 
@@ -57,10 +60,12 @@ export function createPinsRenderer({ state, views, api, shell }) {
         : ''
       const groupLabel = pin.group_key ? translateOption('group', pin.group_key) : ''
       const statusLabel = getStatusLabel(pin.approved)
+      const stationLabel = pin.station_key ? escapeHtml(pin.station_key) : ''
       row.innerHTML = `
         <td><input type="checkbox" data-id="${pin.id}" /></td>
         <td>${pin.id}</td>
         <td>${pin.floor_index}</td>
+        <td>${stationLabel}</td>
         <td>${formatPercent(pin.wellbeing)}</td>
         <td>${reasons}</td>
         <td>${groupLabel}</td>

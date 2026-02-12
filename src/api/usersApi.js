@@ -1,6 +1,7 @@
 /**
  * Users API client for admin user management.
- * Exports: fetchUsers, fetchSelf, createUser, updateUser, updateSelf, deleteUser, resetUserPassword.
+ * Exports: fetchUsers, fetchSelf, createUser, createUserAndNotify, updateUser, updateSelf,
+ *          deleteUser, resetUserPassword, resetUserPasswordAndNotify.
  */
 import { API_BASE, requestJson } from './baseClient'
 
@@ -18,6 +19,16 @@ export function fetchSelf({ token }) {
 
 export function createUser({ token, first_name, last_name, email, password, is_admin, expiry_hours }) {
   const body = { action: 'create', first_name, last_name, email, password, is_admin }
+  if (expiry_hours !== undefined) body.expiry_hours = expiry_hours
+  return requestJson(`${API_BASE}/admin_users.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  })
+}
+
+export function createUserAndNotify({ token, first_name, last_name, email, password, is_admin, expiry_hours }) {
+  const body = { action: 'create_notify', first_name, last_name, email, password, is_admin }
   if (expiry_hours !== undefined) body.expiry_hours = expiry_hours
   return requestJson(`${API_BASE}/admin_users.php`, {
     method: 'POST',

@@ -3,6 +3,7 @@
  * Exports: createProfileController.
  */
 import { runWithButtonFeedback } from '../utils/buttonFeedback'
+import { showModal, hideModal } from '../utils/adminModal'
 
 export function createProfileController({ state, views, api, shell, onLogout }) {
   const {
@@ -25,11 +26,11 @@ export function createProfileController({ state, views, api, shell, onLogout }) 
     currentPasswordInput.value = ''
     newPasswordInput.value = ''
     newPasswordConfirmInput.value = ''
-    views.profileModal.element.classList.add('is-visible')
+    showModal(views.profileModal.element)
   }
 
   const closeProfileModal = () => {
-    views.profileModal.element.classList.remove('is-visible')
+    hideModal(views.profileModal.element)
   }
 
   const handleSave = async () => {

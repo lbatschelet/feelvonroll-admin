@@ -32,6 +32,16 @@ select {
   background: #fff;
 }
 
+textarea {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+  resize: vertical;
+}
+
 body {
   margin: 0;
   background: #f8fafc;
@@ -372,19 +382,7 @@ button.error {
   background: #dc2626;
 }
 
-.language-tools {
-  display: grid;
-  grid-template-columns: 200px 160px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.language-tools input,
-.language-tools select {
-  padding: 10px 12px;
-  font-size: 0.95rem;
-}
+/* Language inline tools removed — languages now use modal */
 
 .question-create {
   padding: 12px;
@@ -427,6 +425,8 @@ button.error {
   border-radius: 16px;
   padding: 16px;
   width: min(92vw, 640px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   box-shadow: 0 18px 36px rgba(15, 23, 42, 0.2);
 }
 
@@ -756,52 +756,11 @@ button.error {
 
 /* Select styling inherited from global rule */
 
-.questionnaire-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* ── Questions tile grid ───────────────────────────────── */
 
-.question-block {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-}
+/* Question tile styles removed — questions now use table layout */
 
-.question-block[open] {
-  background: #ffffff;
-}
-
-.question-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 12px;
-  list-style: none;
-}
-
-.question-header::-webkit-details-marker {
-  display: none;
-}
-
-.question-body {
-  padding: 0 12px 12px;
-}
-
-.question-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-
-.question-toggles {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+/* ── Shared ────────────────────────────────────────────── */
 
 .checkbox-inline {
   display: inline-flex;
@@ -815,84 +774,85 @@ button.error {
   margin: 0;
 }
 
-.drag-handle {
-  font-size: 1rem;
-  color: #94a3b8;
-  cursor: grab;
+/* ── Wide modal variant ────────────────────────────────── */
+
+.modal-wide {
+  max-width: 700px;
 }
 
-.question-block.is-dragging {
-  opacity: 0.6;
+.modal-actions-spacer {
+  flex: 1;
 }
 
-.question-block.is-drop-target {
-  border-color: #2563eb;
+/* ── Question modal layout ─────────────────────────────── */
+
+.modal-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.question-header {
-  justify-content: space-between;
-  text-align: left;
-}
-
-.question-header-main {
+.modal-checks-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
-.question-title {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+.modal-translations {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
-.question-index {
-  color: #64748b;
-  font-weight: 600;
+.modal-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.question-label {
-  font-weight: 600;
-}
+/* ── Save button (blue with icon) ──────────────────────── */
 
-.question-header-meta {
-  display: flex;
+.btn-save {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.question-type {
-  color: #64748b;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.btn-save:hover {
+  background: #1d4ed8;
 }
 
-.question-header-chevron {
-  color: #64748b;
-  font-size: 1rem;
-  transition: transform 0.2s ease;
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.question-block[open] .question-header-chevron {
-  transform: rotate(180deg);
+.btn-save svg {
+  flex-shrink: 0;
 }
 
-.question-header .muted {
-  color: #64748b;
-  font-size: 0.85rem;
-  margin-left: 6px;
-}
+/* ── Legacy question-row (used in password advanced section) */
 
 .question-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
   margin-bottom: 10px;
-}
-
-.translations-row {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .translation-group {
@@ -1096,8 +1056,14 @@ button.error {
   padding-left: 0;
 }
 
-.actions-cell button {
+.actions-cell > button,
+.actions-cell > .reset-split {
   vertical-align: middle;
+  margin-left: 4px;
+}
+
+.actions-cell > :first-child {
+  margin-left: 0;
 }
 
 .option-add {
@@ -1522,12 +1488,207 @@ th {
   height: 18px;
 }
 
+/* ── Questionnaires & Stations ─────────────── */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin-bottom: 1rem;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.form-grid label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 6px !important;
+}
+
+.copy-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.copy-row input {
+  flex: 1;
+}
+
+.station-link-section {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5f5;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.position-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.position-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.form-hint {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 12px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.slot-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.slot-row.dragging {
+  opacity: 0.5;
+}
+
+.slot-row.drag-over {
+  border-color: #2563eb;
+}
+
+.slot-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.slot-header strong {
+  min-width: 50px;
+}
+
+.slot-drag {
+  font-size: 1rem;
+  color: #94a3b8;
+  cursor: grab;
+  user-select: none;
+}
+
+.slot-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+/* ── Chips ─────────────────────────────────────────────── */
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.chip-remove:hover {
+  color: #dc2626;
+}
+
+/* ── Search dropdown ───────────────────────────────────── */
+
+.search-dropdown-wrap {
+  position: relative;
+}
+
+.search-dropdown-input {
+  width: 100%;
+}
+
+.search-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  margin-top: 4px;
+}
+
+.search-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #0f172a;
+}
+
+.search-dropdown-item:hover {
+  background: #f1f5f9;
+}
+
+.search-dropdown-empty {
+  padding: 8px 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 800px) {
   .tools {
-    grid-template-columns: 1fr;
-  }
-
-  .language-tools {
     grid-template-columns: 1fr;
   }
 
@@ -1543,5 +1704,13 @@ th {
     flex-direction: column;
     gap: 8px;
     text-align: center;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .position-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

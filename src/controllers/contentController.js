@@ -3,6 +3,7 @@
  * Exports: createContentController.
  */
 import { marked } from 'marked'
+import { icons } from '../utils/dom'
 
 export function createContentController({ state, views, api, shell }) {
   let activePageKey = 'about'
@@ -64,7 +65,8 @@ export function createContentController({ state, views, api, shell }) {
 
       const saveButton = document.createElement('button')
       saveButton.type = 'button'
-      saveButton.textContent = 'Save'
+      saveButton.className = 'btn-save'
+      saveButton.innerHTML = `${icons.save} Save`
       saveButton.title = `Save ${label} content`
 
       actions.appendChild(previewToggle)
@@ -121,16 +123,6 @@ export function createContentController({ state, views, api, shell }) {
 
   const bindEvents = () => {
     views.contentView.reloadButton.addEventListener('click', () => loadContent())
-
-    views.contentView.tabButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        activePageKey = button.dataset.contentKey
-        views.contentView.tabButtons.forEach((b) =>
-          b.classList.toggle('active', b === button)
-        )
-        loadContent()
-      })
-    })
   }
 
   return { bindEvents, loadContent }

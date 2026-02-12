@@ -1,6 +1,6 @@
 # feelvonroll-admin
 
-Admin panel for the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project. Provides a web interface to manage pins, configure the questionnaire and its translations, and administer users and languages.
+Admin panel for the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project. Provides a web interface to manage pins, configure questions and questionnaires, manage QR-code stations, edit content pages, and administer users and languages.
 
 > [!NOTE]
 > Part of the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) project, developed for [PHBern](https://www.phbern.ch) within [RealTransform](https://sustainability.uzh.ch/de/forschung-lehre/forschung/realtransform.html). See the [main repository](https://github.com/lbatschelet/feelvonroll) for full documentation and project context.
@@ -9,11 +9,14 @@ Admin panel for the [feelvonRoll](https://github.com/lbatschelet/feelvonroll) pr
 
 - **Dashboard** with pin statistics
 - **Pin management**: search, filter, sort, paginate, approve/reject, bulk actions, CSV export
-- **Questionnaire editor**: configure questions (slider, multi-choice, text), drag-and-drop reordering, multi-language translations in a unified table
+- **Question library**: configure questions (slider, multi-choice, text), multi-language translations
+- **Questionnaire builder**: compose reusable questionnaires from the question library with drag-and-drop slot ordering
+- **Station management**: manage physical QR-code stations with 3D camera positioning and questionnaire assignment
+- **Content pages**: edit markdown content pages (e.g. About) per language
 - **Language management**: add, activate/deactivate, delete languages
-- **User management**: create users, assign admin roles, password reset links
-- **Audit log**: track admin actions
-- **Navigation guard**: warns about unsaved changes before leaving the questionnaire page
+- **User management**: create users, assign admin roles, password reset via email or link
+- **Audit log**: track admin actions with pagination
+- **Navigation guard**: warns about unsaved changes before leaving pages
 
 ## Install & Run
 

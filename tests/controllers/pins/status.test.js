@@ -12,9 +12,9 @@ describe('pin status helpers', () => {
   })
 
   it('maps status to label and class', () => {
-    expect(getStatusLabel(1)).toBe('Freigegeben')
-    expect(getStatusLabel(-1)).toBe('Abgelehnt')
-    expect(getStatusLabel(0)).toBe('Wartet')
+    expect(getStatusLabel(1)).toBe('Approved')
+    expect(getStatusLabel(-1)).toBe('Rejected')
+    expect(getStatusLabel(0)).toBe('Pending')
     expect(getStatusClass(1)).toBe('approved')
     expect(getStatusClass(-1)).toBe('rejected')
     expect(getStatusClass(0)).toBe('pending')

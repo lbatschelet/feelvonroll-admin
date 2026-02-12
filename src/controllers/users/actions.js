@@ -80,7 +80,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
   /* ── Delete ── */
 
   const handleDelete = async (button) => {
-    const id = Number(button.dataset.id)
+    const id = Number(button.dataset.delete || button.dataset.id)
     if (!id) return
     const confirmed = window.confirm('Delete this user?')
     if (!confirmed) return
@@ -155,66 +155,91 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
 
     const expiryHours = modal.getSelectedExpiryHours()
 
+    const bootstrapCleanup = () => {
+      if (!state.bootstrapMode) return
+      state.bootstrapMode = false
+      state.bootstrapRequired = false
+      state.loggedIn = false
+      state.token = ''
+      localStorage.removeItem('admin_jwt')
+      shell.setAuthSection('login')
+      shell.applyVisibility()
+    }
+
     try {
       await runWithButtonFeedback(modalCreateUserButton, async () => {
+        /* ── Created without password → send email, link as fallback ── */
+
+        if (useReset) {
+          const result = await api.createUserAndNotify({
+            token: state.token,
+            first_name,
+            last_name,
+            email,
+            password: '',
+            is_admin,
+            expiry_hours: expiryHours,
+          })
+
+          if (result.email_sent) {
+            modal.closeUserModal()
+            shell.setStatus('User created. Password link sent by email.', false)
+            if (state.bootstrapMode) {
+              bootstrapCleanup()
+            } else {
+              await loader.loadUsers()
+              renderer.renderUsers()
+            }
+            return
+          }
+
+          /* Email failed → show link as fallback */
+          if (result.reset_token) {
+            const link = buildResetLink(result.reset_token)
+            state.lastResetLink = link
+            await copyResetLink(link)
+
+            modal.showResult({
+              link,
+              expiryHours,
+              message: 'Email could not be sent. Use the link below instead.',
+              isError: true,
+              onDismiss: () => {
+                if (state.bootstrapMode) {
+                  shell.setStatus('User created. Reset link copied.', false)
+                  bootstrapCleanup()
+                } else {
+                  shell.setStatus('User created. Reset link copied.', false)
+                  loader.loadUsers().then(() => renderer.renderUsers())
+                }
+              },
+            })
+            return
+          }
+        }
+
+        /* ── Created with password → close modal ── */
+
         const result = await api.createUser({
           token: state.token,
           first_name,
           last_name,
           email,
-          password: useReset ? '' : password,
+          password,
           is_admin,
-          expiry_hours: useReset ? expiryHours : undefined,
         })
-
-        /* ── Created without password → show password link in modal ── */
-
-        if (useReset && result.reset_token) {
-          const link = buildResetLink(result.reset_token)
-          state.lastResetLink = link
-          await copyResetLink(link)
-
-          modal.showResult({
-            link,
-            expiryHours,
-            onDismiss: () => {
-              if (state.bootstrapMode) {
-                state.bootstrapMode = false
-                state.bootstrapRequired = false
-                state.loggedIn = false
-                state.token = ''
-                localStorage.removeItem('admin_jwt')
-                shell.setStatus('User created. Reset link copied', false)
-                shell.setAuthSection('login')
-                shell.applyVisibility()
-              } else {
-                shell.setStatus('User created. Reset link copied', false)
-                loader.loadUsers().then(() => renderer.renderUsers())
-              }
-            },
-          })
-          return
-        }
-
-        /* ── Created with password → close modal ── */
 
         modal.closeUserModal()
 
         if (state.bootstrapMode) {
-          state.bootstrapMode = false
-          state.bootstrapRequired = false
-          state.loggedIn = false
-          state.token = ''
-          localStorage.removeItem('admin_jwt')
-          shell.setStatus('User created. Password set', false)
-          shell.setAuthSection('login')
-          shell.applyVisibility()
+          shell.setStatus('User created. Password set.', false)
+          bootstrapCleanup()
           return
         }
 
         await loader.loadUsers()
         renderer.renderUsers()
-        shell.setStatus('User created. Password set', false)
+        shell.setStatus('User created. Password set.', false)
       })
     } catch (error) {
       shell.setStatus(error.message, true)

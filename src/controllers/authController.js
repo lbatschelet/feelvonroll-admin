@@ -12,19 +12,17 @@ export function createAuthController({ state, views, api, shell, router, onOpenP
     api,
     onLogout: () => authSession.handleLogout(),
   })
-  const bootstrapFlow = createBootstrapFlow({ state, api, shell, views })
+  const bootstrapFlow = createBootstrapFlow({ state, api, shell })
   const authSession = createAuthSession({ state, api, shell, views, tokenRefresh, router })
 
   const bindEvents = () => {
     const {
       loginUserButton,
       bootstrapButton,
-      bootstrapCreateUser,
     } = views.loginCard
 
     loginUserButton.addEventListener('click', () => authSession.handleLogin())
     bootstrapButton.addEventListener('click', () => bootstrapFlow.handleBootstrapLogin())
-    bootstrapCreateUser.addEventListener('click', () => bootstrapFlow.handleBootstrapCreateUser())
 
     views.header.navButtons.forEach((button) => {
       button.addEventListener('click', () => {

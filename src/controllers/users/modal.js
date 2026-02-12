@@ -3,6 +3,7 @@
  * Exports: createUserModalController.
  */
 import { copyResetLink } from '../../utils/resetLink'
+import { showModal, hideModal } from '../../utils/adminModal'
 
 const EXPIRY_OPTIONS = [
   { hours: 1, label: '1 hour', short: '1h' },
@@ -191,7 +192,7 @@ export function createUserModalController({ state, views }) {
     modalUserPassword.value = ''
     modalUserPasswordConfirm.value = ''
     modalUserIsAdmin.checked = false
-    element.classList.add('is-visible')
+    showModal(element)
   }
 
   const openUserModalForEdit = (user) => {
@@ -208,11 +209,11 @@ export function createUserModalController({ state, views }) {
     modalUserPassword.value = ''
     modalUserPasswordConfirm.value = ''
     modalUserIsAdmin.checked = Boolean(user.is_admin)
-    element.classList.add('is-visible')
+    showModal(element)
   }
 
   const closeUserModal = () => {
-    element.classList.remove('is-visible')
+    hideModal(element)
     const callback = onResultDismiss
     onResultDismiss = null
     resetModalState()
@@ -221,9 +222,14 @@ export function createUserModalController({ state, views }) {
 
   /* ── Result display (after creating a user with password link) ── */
 
-  const showResult = ({ link, expiryHours, onDismiss }) => {
+  const showResult = ({ link, expiryHours, onDismiss, message = '', isError = false }) => {
     modalFormArea.style.display = 'none'
     modalResultArea.style.display = ''
+    const msgEl = modalResultArea.querySelector('.modal-result-msg')
+    if (msgEl) {
+      msgEl.textContent = message
+      msgEl.classList.toggle('modal-result-error', isError)
+    }
     modalResultLink.value = link
     modalResultExpiryLabel.textContent = `Password link (valid for ${getExpiryLabel(expiryHours)})`
     modalCancelButton.style.display = 'none'
@@ -250,7 +256,7 @@ export function createUserModalController({ state, views }) {
     modalDone.style.display = ''
     modalCopyLink.textContent = 'Copy'
     onResultDismiss = null
-    element.classList.add('is-visible')
+    showModal(element)
   }
 
   const getSelectedExpiryHours = () => selectedExpiryHours

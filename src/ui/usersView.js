@@ -2,8 +2,6 @@
  * Users view builder for user list and actions.
  * Exports: createUsersView.
  */
-import { icons } from '../utils/dom'
-
 export function createUsersView() {
   const usersCard = document.createElement('section')
   usersCard.className = 'card users-card'
@@ -11,7 +9,6 @@ export function createUsersView() {
     <div class="card-header">
       <h2>Users</h2>
       <div class="header-actions">
-        <button id="reloadUsers" class="icon-btn-ghost" title="Reload users list">${icons.reload}</button>
         <button type="button" id="addUser" title="Create a new user">Create user</button>
       </div>
     </div>
@@ -36,7 +33,6 @@ export function createUsersView() {
 
   return {
     element: usersCard,
-    reloadUsersButton: usersCard.querySelector('#reloadUsers'),
     addUserButton: usersCard.querySelector('#addUser'),
     usersBody: usersCard.querySelector('#usersBody'),
   }

@@ -13,6 +13,6 @@ describe('auditService', () => {
   it('formats audit ranges', () => {
     const range = getAuditRange({ offset: 50, limit: 50, total: 120 })
     expect(range).toEqual({ start: 51, end: 100 })
-    expect(formatAuditInfo({ offset: 50, limit: 50, total: 120 })).toBe('51-100 von 120')
+    expect(formatAuditInfo({ offset: 50, limit: 50, total: 120 })).toBe('51-100 of 120')
   })
 })
