@@ -78,6 +78,8 @@ export function initApp({ state, views }) {
   }
   const questionnairesApi = {
     fetchQuestionnaires: api.fetchQuestionnaires,
+    fetchQuestionnaireDetail: api.fetchQuestionnaireDetail,
+    saveQuestionnaireFull: api.saveQuestionnaireFull,
     upsertQuestionnaire: api.upsertQuestionnaire,
     deleteQuestionnaire: api.deleteQuestionnaire,
     saveQuestionnaireSlots: api.saveQuestionnaireSlots,
