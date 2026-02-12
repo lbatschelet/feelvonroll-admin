@@ -16,5 +16,5 @@ export { fetchAuthStatus, loginWithToken, loginUser, setPassword, validateToken,
 export { fetchUsers, fetchSelf, createUser, createUserAndNotify, updateUser, updateSelf, deleteUser, resetUserPassword, resetUserPasswordAndNotify } from './api/usersApi'
 export { fetchAuditLogs } from './api/auditApi'
 export { fetchContent, upsertContent } from './api/contentApi'
-export { fetchQuestionnaires, upsertQuestionnaire, deleteQuestionnaire, saveQuestionnaireSlots } from './api/questionnairesApi'
+export { fetchQuestionnaires, fetchQuestionnaireDetail, saveQuestionnaireFull, upsertQuestionnaire, deleteQuestionnaire, saveQuestionnaireSlots } from './api/questionnairesApi'
 export { fetchStations, upsertStation, deleteStation } from './api/stationsApi'
