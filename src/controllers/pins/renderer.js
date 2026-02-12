@@ -45,7 +45,7 @@ export function createPinsRenderer({ state, views, api, shell }) {
 
     if (!pagePins.length) {
       const row = document.createElement('tr')
-      row.innerHTML = `<td colspan="9" class="empty">No pins found</td>`
+      row.innerHTML = `<td colspan="10" class="empty">No pins found</td>`
       pinsBody.appendChild(row)
       return
     }
@@ -57,10 +57,12 @@ export function createPinsRenderer({ state, views, api, shell }) {
         : ''
       const groupLabel = pin.group_key ? translateOption('group', pin.group_key) : ''
       const statusLabel = getStatusLabel(pin.approved)
+      const stationLabel = pin.station_key ? escapeHtml(pin.station_key) : ''
       row.innerHTML = `
         <td><input type="checkbox" data-id="${pin.id}" /></td>
         <td>${pin.id}</td>
         <td>${pin.floor_index}</td>
+        <td>${stationLabel}</td>
         <td>${formatPercent(pin.wellbeing)}</td>
         <td>${reasons}</td>
         <td>${groupLabel}</td>

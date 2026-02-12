@@ -1522,6 +1522,106 @@ th {
   height: 18px;
 }
 
+/* ── Questionnaires & Stations ─────────────── */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin-bottom: 1rem;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.form-grid label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 6px !important;
+}
+
+.position-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.position-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.form-hint {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 12px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.slot-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.slot-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.slot-header strong {
+  min-width: 60px;
+}
+
+.slot-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.slot-question-label {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #475569;
+}
+
+.button.small {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.button.danger {
+  color: #dc2626;
+}
+
+.button.danger:hover {
+  background: #fef2f2;
+}
+
 @media (max-width: 800px) {
   .tools {
     grid-template-columns: 1fr;
@@ -1543,5 +1643,13 @@ th {
     flex-direction: column;
     gap: 8px;
     text-align: center;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .position-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

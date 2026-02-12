@@ -11,6 +11,8 @@ const ROUTES = {
   '/dashboard': 'dashboard',
   '/pins': 'pins',
   '/questionnaire': 'questionnaire',
+  '/questionnaires': 'questionnaires',
+  '/stations': 'stations',
   '/languages': 'languages',
   '/users': 'users',
   '/audit': 'audit',
