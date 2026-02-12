@@ -1,8 +1,11 @@
 /**
  * Stations controller (admin: CRUD for QR-code stations + capture mode).
+ * Editing now uses a modal. List includes a link button per station.
  * Exports: createStationsController.
  */
 import { icons } from '../utils/dom'
+import { showModal, hideModal, bindModalClose } from '../utils/adminModal'
+import { actionCell, toggleTd } from '../utils/adminTable'
 
 export function createStationsController({ state, views, api, questionnairesApi, shell }) {
   const view = views.stationsView
@@ -12,6 +15,10 @@ export function createStationsController({ state, views, api, questionnairesApi,
   let stations = []
   let questionnaires = []
   let captureWindow = null
+  let editingStation = null
+
+  const getWebappBase = () => import.meta.env.VITE_WEBAPP_BASE || 'https://feelvonroll.ch'
+  const getStationLink = (key) => `${getWebappBase()}?station=${encodeURIComponent(key)}`
 
   // ── Load ───────────────────────────────────────────────────────
 
@@ -44,23 +51,27 @@ export function createStationsController({ state, views, api, questionnairesApi,
         <td>${esc(s.name)}</td>
         <td>${s.floor_index}</td>
         <td>${esc(s.questionnaire_name || '— Default —')}</td>
-        <td>${parseInt(s.is_active) ? 'Yes' : 'No'}</td>
-        <td class="actions-cell">
-          <button class="icon-btn-ghost" data-edit="${s.id}" title="Edit station">${icons.pencil}</button>
-          <button class="icon-btn danger" data-delete="${s.id}" title="Delete station">${icons.trash}</button>
-        </td>
+        ${toggleTd(parseInt(s.is_active), 'active', s.id)}
+        ${actionCell([
+          { type: 'link', key: esc(s.station_key), title: 'Open station link' },
+          { type: 'edit', id: s.id, title: 'Edit station' },
+          { type: 'delete', id: s.id, title: 'Delete station' },
+        ])}
       `
       view.tableBody.appendChild(tr)
     })
   }
 
-  // ── Edit form ──────────────────────────────────────────────────
+  // ── Modal ──────────────────────────────────────────────────────
 
-  const openEditForm = (station = null) => {
-    view.editSection.style.display = ''
+  const openModal = (station = null) => {
+    editingStation = station
+    showModal(view.modal)
     view.editTitle.textContent = station ? 'Edit Station' : 'New Station'
+    view.deleteBtn.style.display = station ? '' : 'none'
     view.idInput.value = station ? station.id : ''
     view.keyInput.value = station ? station.station_key : ''
+    view.keyInput.readOnly = !!station
     view.nameInput.value = station ? station.name : ''
     view.descInput.value = station ? (station.description || '') : ''
     view.floorInput.value = station ? station.floor_index : 0
@@ -73,11 +84,21 @@ export function createStationsController({ state, views, api, questionnairesApi,
     view.tgtY.value = station ? station.target_y : 0
     view.tgtZ.value = station ? station.target_z : 0
 
+    // Show station link when editing existing station
+    if (station) {
+      view.linkSection.style.display = ''
+      view.linkDisplay.value = getStationLink(station.station_key)
+    } else {
+      view.linkSection.style.display = 'none'
+      view.linkDisplay.value = ''
+    }
+
     populateQuestionnaireSelect(station ? station.questionnaire_id : null)
   }
 
-  const closeEditForm = () => {
-    view.editSection.style.display = 'none'
+  const closeModal = () => {
+    hideModal(view.modal)
+    editingStation = null
   }
 
   const populateQuestionnaireSelect = (selectedId) => {
@@ -94,16 +115,28 @@ export function createStationsController({ state, views, api, questionnairesApi,
     })
   }
 
+  // ── Copy link ──────────────────────────────────────────────────
+
+  const copyStationLink = async (key) => {
+    const link = getStationLink(key)
+    try {
+      await navigator.clipboard.writeText(link)
+      shell.setStatus('Link copied to clipboard', false)
+    } catch {
+      // Fallback: select the input text
+      view.linkDisplay.value = link
+      view.linkDisplay.select()
+      document.execCommand('copy')
+      shell.setStatus('Link copied', false)
+    }
+  }
+
   // ── Capture mode ───────────────────────────────────────────────
 
   const openCaptureMode = () => {
-    // Get the webapp URL from the config or derive from current host
-    const webappBase = import.meta.env.VITE_WEBAPP_BASE || 'https://feelvonroll.ch'
-    const captureUrl = `${webappBase}?mode=capture`
-
+    const captureUrl = `${getWebappBase()}?mode=capture`
     captureWindow = window.open(captureUrl, 'feelvonroll-capture', 'width=1200,height=800')
 
-    // Listen for postMessage from the capture window
     const handleMessage = (event) => {
       if (event.data && event.data.type === 'feelvonroll-capture') {
         const { camera, target, floor_index } = event.data
@@ -160,7 +193,7 @@ export function createStationsController({ state, views, api, questionnairesApi,
     try {
       await api.upsertStation({ token: state.token, ...data })
       shell.setStatus('Station saved', false)
-      closeEditForm()
+      closeModal()
       await loadStations()
     } catch (error) {
       shell.setStatus(error.message, true)
@@ -175,6 +208,7 @@ export function createStationsController({ state, views, api, questionnairesApi,
     try {
       await api.deleteStation({ token: state.token, id })
       shell.setStatus('Deleted', false)
+      closeModal()
       await loadStations()
     } catch (error) {
       shell.setStatus(error.message, true)
@@ -184,14 +218,38 @@ export function createStationsController({ state, views, api, questionnairesApi,
   // ── Events ─────────────────────────────────────────────────────
 
   const bindEvents = () => {
-    view.addBtn.addEventListener('click', () => openEditForm(null))
+    view.addBtn.addEventListener('click', () => openModal(null))
+
+    view.tableBody.addEventListener('change', async (e) => {
+      const toggle = e.target.closest('[data-toggle="active"]')
+      if (!toggle) return
+      const id = parseInt(toggle.dataset.id)
+      const s = stations.find((s) => parseInt(s.id) === id)
+      if (!s) return
+      const newActive = toggle.checked
+      try {
+        await api.upsertStation({ token: state.token, id, station_key: s.station_key, name: s.name, is_active: newActive })
+        s.is_active = newActive ? 1 : 0
+        shell.setStatus(`Station ${newActive ? 'activated' : 'deactivated'}`, false)
+      } catch (error) {
+        toggle.checked = !newActive
+        shell.setStatus(error.message, true)
+      }
+    })
 
     view.tableBody.addEventListener('click', (e) => {
+      const linkBtn = e.target.closest('[data-link]')
+      if (linkBtn) {
+        const key = linkBtn.dataset.link
+        window.open(getStationLink(key), '_blank')
+        return
+      }
+
       const editBtn = e.target.closest('[data-edit]')
       if (editBtn) {
         const id = parseInt(editBtn.dataset.edit)
         const s = stations.find((s) => parseInt(s.id) === id)
-        if (s) openEditForm(s)
+        if (s) openModal(s)
         return
       }
 
@@ -202,8 +260,15 @@ export function createStationsController({ state, views, api, questionnairesApi,
     })
 
     view.saveBtn.addEventListener('click', handleSave)
-    view.cancelBtn.addEventListener('click', closeEditForm)
     view.captureBtn.addEventListener('click', openCaptureMode)
+    view.copyLinkBtn.addEventListener('click', () => {
+      if (editingStation) copyStationLink(editingStation.station_key)
+    })
+    view.deleteBtn.addEventListener('click', () => {
+      if (editingStation) handleDelete(parseInt(editingStation.id))
+    })
+
+    bindModalClose(view.modal, closeModal, [view.cancelBtn, view.closeModalBtn])
   }
 
   return { loadStations, bindEvents }

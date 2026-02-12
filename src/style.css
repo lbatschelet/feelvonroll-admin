@@ -32,6 +32,16 @@ select {
   background: #fff;
 }
 
+textarea {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+  resize: vertical;
+}
+
 body {
   margin: 0;
   background: #f8fafc;
@@ -372,19 +382,7 @@ button.error {
   background: #dc2626;
 }
 
-.language-tools {
-  display: grid;
-  grid-template-columns: 200px 160px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.language-tools input,
-.language-tools select {
-  padding: 10px 12px;
-  font-size: 0.95rem;
-}
+/* Language inline tools removed — languages now use modal */
 
 .question-create {
   padding: 12px;
@@ -427,6 +425,8 @@ button.error {
   border-radius: 16px;
   padding: 16px;
   width: min(92vw, 640px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   box-shadow: 0 18px 36px rgba(15, 23, 42, 0.2);
 }
 
@@ -758,84 +758,7 @@ button.error {
 
 /* ── Questions tile grid ───────────────────────────────── */
 
-.questions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.question-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-}
-
-.question-tile:hover {
-  border-color: #94a3b8;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.question-tile.is-inactive {
-  opacity: 0.5;
-}
-
-.question-tile-label {
-  font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.3;
-}
-
-.question-tile-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.question-tile-type {
-  color: #64748b;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.question-tile-key {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-}
-
-.question-tile-add {
-  border: 2px dashed #cbd5e1;
-  background: transparent;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  min-height: 80px;
-}
-
-.question-tile-add:hover {
-  border-color: #64748b;
-  color: #0f172a;
-}
-
-.question-tile-plus {
-  font-size: 1.5rem;
-  font-weight: 300;
-  line-height: 1;
-}
+/* Question tile styles removed — questions now use table layout */
 
 /* ── Shared ────────────────────────────────────────────── */
 
@@ -861,15 +784,75 @@ button.error {
   flex: 1;
 }
 
+/* ── Question modal layout ─────────────────────────────── */
+
+.modal-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.modal-checks-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.modal-translations {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.modal-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* ── Save button (blue with icon) ──────────────────────── */
+
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-save:hover {
+  background: #1d4ed8;
+}
+
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-save svg {
+  flex-shrink: 0;
+}
+
+/* ── Legacy question-row (used in password advanced section) */
+
 .question-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
   margin-bottom: 10px;
-}
-
-.translations-row {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .translation-group {
@@ -1073,8 +1056,14 @@ button.error {
   padding-left: 0;
 }
 
-.actions-cell button {
+.actions-cell > button,
+.actions-cell > .reset-split {
   vertical-align: middle;
+  margin-left: 4px;
+}
+
+.actions-cell > :first-child {
+  margin-left: 0;
 }
 
 .option-add {
@@ -1526,6 +1515,24 @@ th {
   gap: 6px !important;
 }
 
+.copy-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.copy-row input {
+  flex: 1;
+}
+
+.station-link-section {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5f5;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
 .position-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1682,10 +1689,6 @@ th {
 
 @media (max-width: 800px) {
   .tools {
-    grid-template-columns: 1fr;
-  }
-
-  .language-tools {
     grid-template-columns: 1fr;
   }
 

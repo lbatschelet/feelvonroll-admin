@@ -80,7 +80,7 @@ export function createUsersActions({ state, views, api, shell, loader, renderer,
   /* ── Delete ── */
 
   const handleDelete = async (button) => {
-    const id = Number(button.dataset.id)
+    const id = Number(button.dataset.delete || button.dataset.id)
     if (!id) return
     const confirmed = window.confirm('Delete this user?')
     if (!confirmed) return

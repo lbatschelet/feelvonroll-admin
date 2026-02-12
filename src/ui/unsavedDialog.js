@@ -2,6 +2,8 @@
  * Unsaved changes confirmation dialog.
  * Exports: createUnsavedDialog.
  */
+import { icons } from '../utils/dom'
+
 export function createUnsavedDialog() {
   const backdrop = document.createElement('div')
   backdrop.className = 'modal-backdrop unsaved-dialog'
@@ -14,7 +16,7 @@ export function createUnsavedDialog() {
       <div class="modal-actions">
         <button type="button" class="ghost" id="unsavedStay">Stay</button>
         <button type="button" class="danger" id="unsavedDiscard">Discard</button>
-        <button type="button" class="primary" id="unsavedSave">Save &amp; continue</button>
+        <button type="button" class="btn-save" id="unsavedSave">${icons.save} Save &amp; continue</button>
       </div>
     </div>
   `

@@ -2,7 +2,7 @@
  * Languages render helpers for language selectors and table.
  * Exports: createLanguagesRender.
  */
-import { icons } from '../utils/dom'
+import { actionCell } from '../utils/adminTable'
 
 export function createLanguagesRender({ state, views }) {
   const { languageSelect } = views.questionnaireView
@@ -27,25 +27,24 @@ export function createLanguagesRender({ state, views }) {
   const renderLanguagesTable = () => {
     languagesBody.innerHTML = ''
     if (!state.languages.length) {
-      const row = document.createElement('tr')
-      row.innerHTML = `<td colspan="4" class="empty">No languages found</td>`
-      languagesBody.appendChild(row)
+      languagesBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No languages found</td></tr>'
       return
     }
 
     state.languages.forEach((language) => {
       const row = document.createElement('tr')
       row.innerHTML = `
-        <td>${language.lang}</td>
+        <td><code>${language.lang}</code></td>
         <td>${language.label}</td>
         <td>
           <input type="checkbox" data-action="lang-toggle" data-lang="${language.lang}" title="Enable this language" ${
             Number(language.enabled) === 1 ? 'checked' : ''
           } />
         </td>
-        <td class="actions-cell">
-          <button class="icon-btn danger" data-action="lang-delete" data-lang="${language.lang}" title="Delete language">${icons.trash}</button>
-        </td>
+        ${actionCell([
+          { type: 'edit', id: language.lang, title: 'Edit language' },
+          { type: 'delete', id: language.lang, title: 'Delete language' },
+        ])}
       `
       languagesBody.appendChild(row)
     })

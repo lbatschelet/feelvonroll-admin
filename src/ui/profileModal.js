@@ -2,7 +2,7 @@
  * Profile modal builder for self profile edits.
  * Exports: createProfileModal.
  */
-import { enablePasswordToggles } from '../utils/dom'
+import { enablePasswordToggles, icons } from '../utils/dom'
 
 export function createProfileModal() {
   const profileModal = document.createElement('div')
@@ -52,7 +52,7 @@ export function createProfileModal() {
       </div>
       <div class="modal-actions">
         <button type="button" class="ghost" id="profileCancel">Cancel</button>
-        <button type="button" id="profileSave">Save</button>
+        <button type="button" id="profileSave" class="btn-save">${icons.save} Save</button>
       </div>
     </div>
   `

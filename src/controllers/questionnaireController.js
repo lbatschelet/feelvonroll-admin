@@ -1,12 +1,13 @@
 /**
  * Questionnaire controller orchestrates data, render, actions, and sort modules.
- * Uses a tile grid with an edit/create modal instead of inline editing.
+ * Each question is saved directly to the API from the modal (no batch save).
  * Exports: createQuestionnaireController.
  */
 import { createQuestionnaireData } from './questionnaireData'
 import { createQuestionnaireRender } from './questionnaireRender'
-import { createQuestionnaireActions } from './questionnaireActions'
+import { createQuestionnaireActions, buildQuestionConfig, buildNewQuestion } from './questionnaireActions'
 import { createLanguagesRender } from './languagesRender'
+import { showModal, hideModal, bindModalClose } from '../utils/adminModal'
 
 export function createQuestionnaireController({ state, views, api, shell, renderDashboard, renderPins }) {
   const data = createQuestionnaireData({ state, api })
@@ -25,19 +26,15 @@ export function createQuestionnaireController({ state, views, api, shell, render
   let editingQuestionKey = null
   let draggingOption = null
 
-  const markClean = () => { state.questionnaireDirty = false }
-  const markDirty = () => { state.questionnaireDirty = true }
-
   const loadQuestionnaire = async () => {
-    shell.setStatus('Loading questionnaire...', false)
+    shell.setStatus('Loading questions...', false)
     try {
       await data.loadLanguages()
       languagesRender.renderLanguageSelectors()
       await Promise.all([data.loadQuestions(), data.loadOptions(), data.loadTranslations()])
       render.renderQuestionsList()
-      markClean()
       renderDashboard()
-      shell.setStatus('Questionnaire loaded', false)
+      shell.setStatus('')
     } catch (error) {
       shell.setStatus(error.message, true)
     }
@@ -55,7 +52,7 @@ export function createQuestionnaireController({ state, views, api, shell, render
     editingQuestionKey = null
     render.populateModalForCreate()
     render.renderNewQuestionTranslations(views.questionnaireView.newQuestionType.value)
-    views.questionnaireView.questionModal.classList.add('is-visible')
+    showModal(views.questionnaireView.questionModal)
     views.questionnaireView.newQuestionKey.focus()
   }
 
@@ -64,39 +61,27 @@ export function createQuestionnaireController({ state, views, api, shell, render
     if (!question) return
     editingQuestionKey = questionKey
     render.populateModalForEdit(question)
-    views.questionnaireView.questionModal.classList.add('is-visible')
+    showModal(views.questionnaireView.questionModal)
   }
 
   const closeModal = () => {
-    views.questionnaireView.questionModal.classList.remove('is-visible')
+    hideModal(views.questionnaireView.questionModal)
     editingQuestionKey = null
   }
 
-  /* ── Save (create or update) from modal ─────────────────── */
+  /* ── Save from modal (directly to API) ───────────────────── */
 
-  const handleModalSave = () => {
+  const handleModalSave = async () => {
     if (editingQuestionKey) {
-      handleEditSave()
+      await handleEditSave()
     } else {
-      handleAddQuestion()
+      await handleCreateSave()
     }
   }
 
-  const handleAddQuestion = () => {
-    const {
-      newQuestionKey,
-      newQuestionType,
-      newQuestionRequired,
-      newQuestionActive,
-      newQuestionMin,
-      newQuestionMax,
-      newQuestionStep,
-      newQuestionDefault,
-      newQuestionUseForColor,
-      newQuestionSingleChoice,
-      newQuestionRows,
-    } = views.questionnaireView
-    const key = newQuestionKey.value.trim()
+  const handleCreateSave = async () => {
+    const v = views.questionnaireView
+    const key = v.newQuestionKey.value.trim()
     if (!key) {
       shell.setStatus('Key is required', true)
       return
@@ -105,88 +90,110 @@ export function createQuestionnaireController({ state, views, api, shell, render
       shell.setStatus('Key already exists', true)
       return
     }
-    const type = newQuestionType.value
-    const required = newQuestionRequired.checked
-    const isActive = newQuestionActive.checked
-    const added = actions.addQuestion({
-      key,
+
+    const type = v.newQuestionType.value
+    const translationsByLang = actions.collectNewQuestionTranslations(type)
+    if (!translationsByLang) return
+
+    const config = buildQuestionConfig({
       type,
-      required,
-      isActive,
-      configValues: {
-        min: newQuestionMin.value,
-        max: newQuestionMax.value,
-        step: newQuestionStep.value,
-        default: newQuestionDefault.value,
-        use_for_color: newQuestionUseForColor.checked,
-        single_choice: newQuestionSingleChoice.checked,
-        rows: newQuestionRows.value,
+      values: {
+        min: v.newQuestionMin.value,
+        max: v.newQuestionMax.value,
+        step: v.newQuestionStep.value,
+        default: v.newQuestionDefault.value,
+        use_for_color: v.newQuestionUseForColor.checked,
+        single_choice: v.newQuestionSingleChoice.checked,
+        rows: v.newQuestionRows.value,
       },
     })
-    if (!added) return
-    actions.resetNewQuestionForm()
-    closeModal()
-    render.renderQuestionsList()
-    markDirty()
+    const question = buildNewQuestion({
+      key,
+      type,
+      required: v.newQuestionRequired.checked,
+      isActive: v.newQuestionActive.checked,
+      config,
+      existingQuestions: state.questions,
+    })
+
+    shell.setStatus('Saving...', false)
+    try {
+      await actions.saveSingleQuestion(question, translationsByLang)
+      closeModal()
+      shell.setStatus('Question created', false)
+      await actions.reloadAndRender()
+    } catch (error) {
+      shell.setStatus(error.message, true)
+    }
   }
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     const question = state.questions.find((q) => q.question_key === editingQuestionKey)
     if (!question) return
 
     const v = views.questionnaireView
-    question.required = v.newQuestionRequired.checked
-    question.is_active = v.newQuestionActive.checked
+
+    // Build updated question object
+    const updated = {
+      question_key: editingQuestionKey,
+      type: question.type,
+      required: v.newQuestionRequired.checked,
+      sort: question.sort,
+      is_active: v.newQuestionActive.checked,
+      config: { ...(question.config || {}) },
+    }
 
     if (question.type === 'slider') {
-      question.config = question.config || {}
-      question.config.min = Number(v.newQuestionMin.value)
-      question.config.max = Number(v.newQuestionMax.value)
-      question.config.step = Number(v.newQuestionStep.value)
-      question.config.default = Number(v.newQuestionDefault.value)
-      question.config.use_for_color = v.newQuestionUseForColor.checked
+      updated.config.min = Number(v.newQuestionMin.value)
+      updated.config.max = Number(v.newQuestionMax.value)
+      updated.config.step = Number(v.newQuestionStep.value)
+      updated.config.default = Number(v.newQuestionDefault.value)
+      updated.config.use_for_color = v.newQuestionUseForColor.checked
     }
     if (question.type === 'multi') {
-      question.config = question.config || {}
-      question.config.allow_multiple = !v.newQuestionSingleChoice.checked
+      updated.config.allow_multiple = !v.newQuestionSingleChoice.checked
     }
     if (question.type === 'text') {
-      question.config = question.config || {}
-      question.config.rows = Number(v.newQuestionRows.value)
+      updated.config.rows = Number(v.newQuestionRows.value)
     }
 
     // Collect translations from the modal
+    const translationsByLang = {}
     const translationInputs = v.newQuestionTranslations.querySelectorAll('input[data-lang]')
+    for (const language of state.languages) {
+      translationsByLang[language.lang] = {}
+    }
     translationInputs.forEach((input) => {
       const lang = input.dataset.lang
       const field = input.dataset.field
-      if (!lang || !field) return
-      const tKey = `questions.${editingQuestionKey}.${field}`
-      if (!state.pendingTranslationsByLang[lang]) {
-        state.pendingTranslationsByLang[lang] = {}
-      }
-      state.pendingTranslationsByLang[lang][tKey] = input.value.trim()
-      if (!state.translationsByLang[lang]) {
-        state.translationsByLang[lang] = {}
-      }
-      state.translationsByLang[lang][tKey] = input.value.trim()
+      if (!lang || !field || !translationsByLang[lang]) return
+      translationsByLang[lang][field] = input.value.trim()
     })
 
-    closeModal()
-    render.renderQuestionsList()
-    markDirty()
+    shell.setStatus('Saving...', false)
+    try {
+      await actions.saveSingleQuestion(updated, translationsByLang)
+      closeModal()
+      shell.setStatus('Question saved', false)
+      await actions.reloadAndRender()
+    } catch (error) {
+      shell.setStatus(error.message, true)
+    }
   }
 
   /* ── Delete question ────────────────────────────────────── */
 
-  const handleDeleteQuestion = () => {
-    if (!editingQuestionKey) return
-    if (!window.confirm(`Delete question "${editingQuestionKey}"?`)) return
-    state.questions = state.questions.filter((q) => q.question_key !== editingQuestionKey)
-    closeModal()
-    render.renderQuestionsList()
-    markDirty()
-    shell.setStatus('Question removed (save to apply)', false)
+  const handleDeleteQuestion = async (questionKey) => {
+    if (!window.confirm(`Delete question "${questionKey}"?`)) return
+    shell.setStatus('Deleting...', false)
+    try {
+      await actions.deleteQuestion(questionKey)
+      closeModal()
+      shell.setStatus('Question deleted', false)
+      await actions.reloadAndRender()
+    } catch (error) {
+      shell.setStatus(error.message, true)
+    }
   }
 
   /* ── Option handlers ────────────────────────────────────── */
@@ -268,15 +275,6 @@ export function createQuestionnaireController({ state, views, api, shell, render
   /* ── Events ─────────────────────────────────────────────── */
 
   const bindEvents = () => {
-    views.questionnaireView.reloadQuestionnaireButton.addEventListener('click', () =>
-      loadQuestionnaire()
-    )
-    views.questionnaireView.saveQuestionnaireButton.addEventListener('click', async () => {
-      await actions.saveQuestionnaire()
-      markClean()
-    })
-    views.questionnaireView.closeQuestionModalButton.addEventListener('click', closeModal)
-    views.questionnaireView.cancelQuestionModalButton.addEventListener('click', closeModal)
     views.questionnaireView.newQuestionType.addEventListener('change', () => {
       render.renderCreateFormVisibility()
       if (!editingQuestionKey) {
@@ -284,23 +282,49 @@ export function createQuestionnaireController({ state, views, api, shell, render
       }
     })
     views.questionnaireView.addQuestionButton.addEventListener('click', handleModalSave)
-    views.questionnaireView.deleteQuestionButton.addEventListener('click', handleDeleteQuestion)
-
-    // Track dirty state on modal inputs
-    views.questionnaireView.questionModal.addEventListener('input', () => {
-      if (editingQuestionKey) markDirty()
+    views.questionnaireView.deleteQuestionButton.addEventListener('click', () => {
+      if (editingQuestionKey) handleDeleteQuestion(editingQuestionKey)
     })
 
-    // Tile clicks: open edit or create modal
+    bindModalClose(views.questionnaireView.questionModal, closeModal, [
+      views.questionnaireView.closeQuestionModalButton,
+      views.questionnaireView.cancelQuestionModalButton,
+    ])
+
+    // "+ New Question" button in header
+    views.questionnaireView.addQuestionBtn.addEventListener('click', () => openModalForCreate())
+
+    // Active toggle in table
+    views.questionnaireView.questionsBody.addEventListener('change', async (event) => {
+      const toggle = event.target.closest('[data-toggle="active"]')
+      if (!toggle) return
+      const key = toggle.dataset.id
+      const question = state.questions.find((q) => q.question_key === key)
+      if (!question) return
+      const newActive = toggle.checked
+      try {
+        await api.upsertQuestion({
+          token: state.token,
+          question: { ...question, is_active: newActive },
+        })
+        question.is_active = newActive
+        shell.setStatus(`Question ${newActive ? 'activated' : 'deactivated'}`, false)
+      } catch (error) {
+        toggle.checked = !newActive
+        shell.setStatus(error.message, true)
+      }
+    })
+
+    // Table row edit/delete clicks
     views.questionnaireView.questionsBody.addEventListener('click', (event) => {
-      const addTile = event.target.closest('[data-action="add-question"]')
-      if (addTile) {
-        openModalForCreate()
+      const editBtn = event.target.closest('[data-edit]')
+      if (editBtn) {
+        openModalForEdit(editBtn.dataset.edit)
         return
       }
-      const tile = event.target.closest('.question-tile[data-key]')
-      if (tile) {
-        openModalForEdit(tile.dataset.key)
+      const deleteBtn = event.target.closest('[data-delete]')
+      if (deleteBtn) {
+        handleDeleteQuestion(deleteBtn.dataset.delete)
       }
     })
 
@@ -308,12 +332,8 @@ export function createQuestionnaireController({ state, views, api, shell, render
     views.questionnaireView.questionModalOptions.addEventListener('click', (event) => {
       const button = event.target.closest('button[data-action]')
       if (!button) return
-      if (button.dataset.action === 'option-delete') {
-        handleOptionDelete(button)
-      }
-      if (button.dataset.action === 'option-add') {
-        handleOptionAdd(button)
-      }
+      if (button.dataset.action === 'option-delete') handleOptionDelete(button)
+      if (button.dataset.action === 'option-add') handleOptionAdd(button)
     })
 
     views.questionnaireView.questionModalOptions.addEventListener('change', (event) => {
@@ -373,20 +393,5 @@ export function createQuestionnaireController({ state, views, api, shell, render
     })
   }
 
-  const saveAndClean = async () => {
-    await actions.saveQuestionnaire()
-    markClean()
-  }
-
-  const discardChanges = async () => {
-    await loadQuestionnaire()
-  }
-
-  const getDirtyGuard = () => ({
-    isDirty: () => state.questionnaireDirty && state.page === 'questionnaire',
-    save: saveAndClean,
-    discard: discardChanges,
-  })
-
-  return { bindEvents, loadQuestionnaire, loadTranslations, getDirtyGuard }
+  return { bindEvents, loadQuestionnaire, loadTranslations }
 }

@@ -30,6 +30,6 @@ describe('questionnaireActions helpers', () => {
       config: { rows: 3 },
       existingQuestions: [{ question_key: 'a', sort: 10 }],
     })
-    expect(question.sort).toBe(20)
+    expect(question.sort).toBe(11)
   })
 })

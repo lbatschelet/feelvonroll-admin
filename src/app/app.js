@@ -146,8 +146,6 @@ export function initApp({ state, views }) {
     state, views, api: stationsApi, questionnairesApi, shell,
   })
 
-  shell.registerDirtyGuard(questionnaireController.getDirtyGuard())
-
   const pageHandlers = {
     dashboard: dashboardController.renderDashboard,
     users: usersController.renderUsers,

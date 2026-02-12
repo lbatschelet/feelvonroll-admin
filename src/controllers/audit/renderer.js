@@ -3,6 +3,7 @@
  * Exports: createAuditRenderer.
  */
 import { escapeHtml, formatDate } from '../../utils/format'
+import { updatePagination, emptyRow } from '../../utils/adminTable'
 
 export function createAuditRenderer({ state, views }) {
   const {
@@ -27,14 +28,18 @@ export function createAuditRenderer({ state, views }) {
     state.audit.offset = (page - 1) * limit
 
     auditCount.textContent = String(total)
-    auditPageInfo.textContent = `Page ${page} of ${maxPage}`
-    auditFirstButton.disabled = page <= 1
-    auditPrevButton.disabled = page <= 1
-    auditNextButton.disabled = page >= maxPage
-    auditLastButton.disabled = page >= maxPage
+    updatePagination({
+      page,
+      maxPage,
+      pageInfo: auditPageInfo,
+      firstBtn: auditFirstButton,
+      prevBtn: auditPrevButton,
+      nextBtn: auditNextButton,
+      lastBtn: auditLastButton,
+    })
 
     if (!state.audit.items.length) {
-      auditBody.innerHTML = '<tr><td colspan="5" class="empty">No entries</td></tr>'
+      auditBody.innerHTML = emptyRow(5, 'No entries')
       return
     }
     state.audit.items.forEach((item) => {

@@ -4,6 +4,7 @@
  * Exports: createQuestionnaireRender.
  */
 import { createButton, createCheckbox, createInput, createLabeled, icons } from '../utils/dom'
+import { actionCell, toggleTd } from '../utils/adminTable'
 
 export function createQuestionnaireRender({ state, views }) {
   const questionnaireView = views.questionnaireView
@@ -12,47 +13,37 @@ export function createQuestionnaireRender({ state, views }) {
   const getTranslationFor = (lang, key) =>
     state.translationsByLang[lang]?.[key] || state.pendingTranslationsByLang[lang]?.[key] || ''
 
-  /* ── Tile grid ────────────────────────────────────────────── */
+  /* ── Table list ───────────────────────────────────────────── */
 
   const renderQuestionsList = () => {
     questionsBody.innerHTML = ''
     if (!state.questions.length) {
-      const empty = document.createElement('div')
-      empty.className = 'empty'
-      empty.textContent = 'No questions yet'
-      questionsBody.appendChild(empty)
+      questionsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No questions yet</td></tr>'
+      return
     }
 
     state.questions
       .slice()
       .sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0))
       .forEach((question) => {
-        const tile = document.createElement('button')
-        tile.type = 'button'
-        tile.className = 'question-tile'
-        tile.dataset.key = question.question_key
-        if (!question.is_active) tile.classList.add('is-inactive')
+        const tr = document.createElement('tr')
+        if (!question.is_active) tr.style.opacity = '0.5'
 
         const labelKey = `questions.${question.question_key}.label`
-        const label = getTranslationFor(state.selectedLanguage, labelKey) || question.question_key
+        const label = getTranslationFor('en', labelKey) || getTranslationFor(state.selectedLanguage, labelKey) || '—'
 
-        tile.innerHTML = `
-          <span class="question-tile-label">${escapeHtml(label)}</span>
-          <span class="question-tile-meta">
-            <span class="question-tile-type">${question.type}</span>
-            <span class="question-tile-key">${escapeHtml(question.question_key)}</span>
-          </span>
+        tr.innerHTML = `
+          <td><code>${escapeHtml(question.question_key)}</code></td>
+          <td>${escapeHtml(label)}</td>
+          <td>${question.type}</td>
+          ${toggleTd(question.is_active, 'active', question.question_key)}
+          ${actionCell([
+            { type: 'edit', id: question.question_key, title: 'Edit question' },
+            { type: 'delete', id: question.question_key, title: 'Delete question' },
+          ])}
         `
-        questionsBody.appendChild(tile)
+        questionsBody.appendChild(tr)
       })
-
-    // "Add new" tile
-    const addTile = document.createElement('button')
-    addTile.type = 'button'
-    addTile.className = 'question-tile question-tile-add'
-    addTile.dataset.action = 'add-question'
-    addTile.innerHTML = `<span class="question-tile-plus">+</span><span>New question</span>`
-    questionsBody.appendChild(addTile)
   }
 
   /* ── Populate modal for editing an existing question ─────── */
@@ -60,7 +51,7 @@ export function createQuestionnaireRender({ state, views }) {
   const populateModalForEdit = (question) => {
     const v = questionnaireView
     v.questionModalTitle.textContent = 'Edit question'
-    v.addQuestionButton.textContent = 'Save'
+    v.addQuestionButton.innerHTML = `${icons.save} Save`
     v.deleteQuestionButton.style.display = ''
     v.newQuestionKey.value = question.question_key
     v.newQuestionKey.readOnly = true
@@ -89,7 +80,7 @@ export function createQuestionnaireRender({ state, views }) {
   const populateModalForCreate = () => {
     const v = questionnaireView
     v.questionModalTitle.textContent = 'New question'
-    v.addQuestionButton.textContent = 'Add question'
+    v.addQuestionButton.innerHTML = `${icons.save} Add question`
     v.deleteQuestionButton.style.display = 'none'
     v.newQuestionKey.value = ''
     v.newQuestionKey.readOnly = false
@@ -270,15 +261,15 @@ export function createQuestionnaireRender({ state, views }) {
 
   const renderCreateFormVisibility = () => {
     const type = questionnaireView.newQuestionType.value
-    questionnaireView.questionModal.querySelectorAll('.slider-only').forEach((node) => {
-      node.style.display = type === 'slider' ? 'flex' : 'none'
-    })
-    questionnaireView.questionModal.querySelectorAll('.multi-only').forEach((node) => {
-      node.style.display = type === 'multi' ? 'flex' : 'none'
-    })
-    questionnaireView.questionModal.querySelectorAll('.text-only').forEach((node) => {
-      node.style.display = type === 'text' ? 'flex' : 'none'
-    })
+    const showIf = (selector, condition) => {
+      questionnaireView.questionModal.querySelectorAll(selector).forEach((node) => {
+        const isInline = node.classList.contains('checkbox-inline')
+        node.style.display = condition ? (isInline ? 'inline-flex' : 'grid') : 'none'
+      })
+    }
+    showIf('.slider-only', type === 'slider')
+    showIf('.multi-only', type === 'multi')
+    showIf('.text-only', type === 'text')
   }
 
   const renderNewQuestionTranslations = (type) => {
